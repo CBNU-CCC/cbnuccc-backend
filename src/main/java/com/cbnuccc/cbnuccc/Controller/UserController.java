@@ -83,9 +83,13 @@ public class UserController {
     // delete user by uuid
     @DeleteMapping("/user/{uuid}")
     public ResponseEntity<?> deleteUser(@PathVariable("uuid") UUID uuid) {
+        Optional<UserDto> _deletedUser = userService.findUserByUuid(uuid);
+
         ErrorCode resultCode = userService.deleteUserByUuid(uuid);
-        if (resultCode != ErrorCode.NO_ERROR)
+        if (resultCode != ErrorCode.NO_ERROR || _deletedUser.isEmpty())
             return resultCode.makeErrorResponseEntity();
-        return getUserByUuid(uuid);
+
+        UserDto deletedUser = _deletedUser.get();
+        return ResponseEntity.status(HttpStatus.OK).body(deletedUser);
     }
 }

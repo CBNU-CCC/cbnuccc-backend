@@ -42,6 +42,14 @@ public class UserService {
         return user;
     }
 
+    public Optional<UserDto> findUserByUuid(UUID uuid) {
+        Optional<User> _user = userJpaRepository.findByUuid(uuid);
+        if (_user.isEmpty())
+            return Optional.ofNullable(null);
+        UserDto result = UserToUserDto(_user.get());
+        return Optional.of(result);
+    }
+
     public List<UserDto> getAllUsers(UserDto exampleUser) {
         User example = UserDtoToUser(exampleUser);
         List<User> users = userJpaRepository.findAll(Example.of(example));
