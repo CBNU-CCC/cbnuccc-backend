@@ -57,18 +57,7 @@ public class UserController {
     // create user, but the user's email should not be same with other's email.
     @PostMapping("/user")
     public ResponseEntity<?> createUser(@RequestBody User user) {
-        boolean isDuplicated = userService.checkDuplicatedUserByEmail(user.getEmail());
-
-        if (isDuplicated)
-            return ErrorCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
-
-        Optional<UserDto> result = userService.createUser(user);
-        boolean somethingWentWrong = result.isEmpty();
-
-        if (somethingWentWrong)
-            return ErrorCode.SOMETHING_WENT_WRONG.makeErrorResponseEntity();
-
-        return ResponseEntity.status(HttpStatus.OK).body(result.get());
+        return userService.createUser(user);
     }
 
     // update user by uuid

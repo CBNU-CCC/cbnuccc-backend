@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.cbnuccc.cbnuccc.ErrorCode;
@@ -68,17 +70,20 @@ public class UserService {
     }
 
     // create a user.
-    // returning value is null when creation of a user is failed,
-    // but returning value is a user being created when it is successed.
-    public Optional<UserDto> createUser(User user) {
+    public ResponseEntity<?> createUser(User user) {
         user.setUuid(UUID.randomUUID());
         user.setSalt("testsalt");
 
+        if (checkDuplicatedUserByEmail(user.getEmail()))
+            return ErrorCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
+
         try {
-            userJpaRepository.save(user);
-            return Optional.ofNullable(UserToUserDto(user));
+            User createdUser = userJpaRepository.save(user);
+            UserDto createdUserDto = UserToUserDto(createdUser);
+            return ResponseEntity.status(HttpStatus.OK).body(createdUserDto);
         } catch (Exception e) {
-            return null;
+            System.err.println(e);
+            return ErrorCode.SOMETHING_WENT_WRONG.makeErrorResponseEntity();
         }
     }
 
