@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.cbnuccc.cbnuccc.ErrorCode;
+import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.User;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
@@ -29,8 +30,8 @@ public class UserService {
     @Autowired
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${pepper}")
-    private final String pepper;
+    @Autowired
+    private final SecurityUtil securityUtil;
 
     // make User to UserDto.
     private UserDto UserToUserDto(User user) {
@@ -59,12 +60,12 @@ public class UserService {
 
     // make encoded string from given string.
     private String encodePassword(String password) {
-        return passwordEncoder.encode(password + pepper);
+        return passwordEncoder.encode(securityUtil.addPepper(password));
     }
 
     // check if plane and hashed string are actually same.
     private boolean checkMatched(String planePassword, String encodedPassword) {
-        return passwordEncoder.matches(planePassword + pepper, encodedPassword);
+        return passwordEncoder.matches(securityUtil.addPepper(planePassword), encodedPassword);
     }
 
     // make user's password encoded.
