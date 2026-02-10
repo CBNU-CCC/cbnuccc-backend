@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,25 +14,20 @@ import org.springframework.stereotype.Service;
 import com.cbnuccc.cbnuccc.ErrorCode;
 import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
-import com.cbnuccc.cbnuccc.Model.User;
+import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserJpaRepository userJpaRepository;
-
-    @Autowired
+    private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
     private final SecurityUtil securityUtil;
 
     // make User to UserDto.
-    private UserDto UserToUserDto(User user) {
+    private UserDto UserToUserDto(MyUser user) {
         return new UserDto(
                 user.getUuid(),
                 user.getEmail(),
@@ -45,8 +39,8 @@ public class UserService {
     }
 
     // make UserDto to User.
-    private User UserDtoToUser(UserDto userDto) {
-        User user = new User();
+    private MyUser UserDtoToUser(UserDto userDto) {
+        MyUser user = new MyUser();
         user.setEmail(userDto.getEmail());
         user.setUuid(userDto.getUuid());
         user.setRank(userDto.getRank());
@@ -62,13 +56,8 @@ public class UserService {
         return passwordEncoder.encode(securityUtil.addPepper(password));
     }
 
-    // check if plane and hashed string are actually same.
-    private boolean checkMatched(String planePassword, String encodedPassword) {
-        return passwordEncoder.matches(securityUtil.addPepper(planePassword), encodedPassword);
-    }
-
     // make user's password encoded.
-    private User makeUserPasswordEncoded(User user) {
+    private MyUser makeUserPasswordEncoded(MyUser user) {
         String planePassword = user.getPassword();
         String encodedPassword = encodePassword(planePassword);
         user.setPassword(encodedPassword);
@@ -77,7 +66,7 @@ public class UserService {
 
     // find a user by given uuid.
     public Optional<UserDto> findUserByUuid(UUID uuid) {
-        Optional<User> _user = userJpaRepository.findByUuid(uuid);
+        Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return Optional.ofNullable(null);
         UserDto result = UserToUserDto(_user.get());
@@ -86,11 +75,11 @@ public class UserService {
 
     // find all of users that are matched with given UserDto.
     public List<UserDto> findAllMatchedUsers(UserDto exampleUser) {
-        User example = UserDtoToUser(exampleUser);
-        List<User> users = userJpaRepository.findAll(Example.of(example));
+        MyUser example = UserDtoToUser(exampleUser);
+        List<MyUser> users = userJpaRepository.findAll(Example.of(example));
 
         List<UserDto> ret = new ArrayList<UserDto>();
-        for (User user : users) {
+        for (MyUser user : users) {
             UserDto userDto = UserToUserDto(user);
             ret.add(userDto);
         }
@@ -99,7 +88,7 @@ public class UserService {
     }
 
     // create a user.
-    public ResponseEntity<?> createUser(User user) {
+    public ResponseEntity<?> createUser(MyUser user) {
         user.setUuid(UUID.randomUUID());
 
         if (checkDuplicatedUserByEmail(user.getEmail()))
@@ -109,7 +98,7 @@ public class UserService {
         user = makeUserPasswordEncoded(user);
 
         try {
-            User createdUser = userJpaRepository.save(user);
+            MyUser createdUser = userJpaRepository.save(user);
             UserDto createdUserDto = UserToUserDto(createdUser);
             return ResponseEntity.status(HttpStatus.OK).body(createdUserDto);
         } catch (Exception e) {
@@ -120,19 +109,19 @@ public class UserService {
 
     // check a user by email if it is duplicated.
     public boolean checkDuplicatedUserByEmail(String email) {
-        Optional<User> user = userJpaRepository.findByEmail(email);
+        Optional<MyUser> user = userJpaRepository.findByEmail(email);
         return user.isPresent();
     }
 
     // update a user to given user by uuid.
     // if any given user's field is null,
     // the matched field of the user is not changed.
-    public ErrorCode updateUserByUuid(UUID uuid, User user) {
-        Optional<User> _oldUser = userJpaRepository.findByUuid(uuid);
+    public ErrorCode updateUserByUuid(UUID uuid, MyUser user) {
+        Optional<MyUser> _oldUser = userJpaRepository.findByUuid(uuid);
         if (_oldUser.isEmpty())
             return ErrorCode.NO_USER_FOUND;
 
-        User oldUser = _oldUser.get();
+        MyUser oldUser = _oldUser.get();
         if (user.getId() != null ||
                 user.getUuid() != null ||
                 user.getStudentId() != null)
@@ -161,11 +150,11 @@ public class UserService {
 
     // delete a user by uuid.
     public ErrorCode deleteUserByUuid(UUID uuid) {
-        Optional<User> _user = userJpaRepository.findByUuid(uuid);
+        Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return ErrorCode.NO_USER_FOUND;
 
-        User user = _user.get();
+        MyUser user = _user.get();
         userJpaRepository.delete(user);
         return ErrorCode.NO_ERROR;
     }

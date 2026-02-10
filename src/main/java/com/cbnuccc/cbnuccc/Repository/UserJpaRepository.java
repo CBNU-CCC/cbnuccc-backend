@@ -5,10 +5,10 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.cbnuccc.cbnuccc.Model.User;
+import com.cbnuccc.cbnuccc.Model.MyUser;
 
-public interface UserJpaRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
+public interface UserJpaRepository extends JpaRepository<MyUser, UUID> {
+    Optional<MyUser> findByEmail(String email);
 
-    Optional<User> findByUuid(UUID uuid);
+    Optional<MyUser> findByUuid(UUID uuid);
 }

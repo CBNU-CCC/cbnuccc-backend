@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cbnuccc.cbnuccc.ErrorCode;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
-import com.cbnuccc.cbnuccc.Model.User;
+import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Service.UserService;
 
 @RestController
@@ -56,13 +56,13 @@ public class UserController {
 
     // create user, but the user's email should not be same with other's email.
     @PostMapping("/user")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@RequestBody MyUser user) {
         return userService.createUser(user);
     }
 
     // update user by uuid
     @PatchMapping("/user/{uuid}")
-    public ResponseEntity<?> updateUser(@PathVariable("uuid") UUID uuid, @RequestBody User user) {
+    public ResponseEntity<?> updateUser(@PathVariable("uuid") UUID uuid, @RequestBody MyUser user) {
         ErrorCode resultCode = userService.updateUserByUuid(uuid, user);
         if (resultCode != ErrorCode.NO_ERROR)
             return resultCode.makeErrorResponseEntity();
