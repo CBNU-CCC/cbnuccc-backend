@@ -15,8 +15,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // TODO: Delete below code after made jwt login functionality.
         http.csrf((csrf) -> csrf.disable());
-        http.sessionManagement((session) -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.authorizeHttpRequests((authorize) -> authorize.requestMatchers("/**").permitAll());
 
