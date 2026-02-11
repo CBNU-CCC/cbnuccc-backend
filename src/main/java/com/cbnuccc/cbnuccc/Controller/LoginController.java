@@ -2,7 +2,6 @@ package com.cbnuccc.cbnuccc.Controller;
 
 import java.util.Map;
 
-import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
