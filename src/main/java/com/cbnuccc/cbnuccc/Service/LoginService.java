@@ -36,6 +36,10 @@ public class LoginService {
         int expirationMillis = 604800000;
         String jwt = Jwts.builder()
                 .claim("uuid", user.getUuid())
+                .claim("email", user.getEmail())
+                .claim("name", user.getName())
+                .claim("sex", user.getSex().toString())
+                .claim("rank", user.getRank().toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(key)

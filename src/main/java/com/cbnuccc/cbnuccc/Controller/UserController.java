@@ -79,6 +79,6 @@ public class UserController {
             return resultCode.makeErrorResponseEntity();
 
         UserDto deletedUser = _deletedUser.get();
-        return ResponseEntity.status(HttpStatus.OK).body(deletedUser);
+        return ResponseEntity.ok(deletedUser);
     }
 }
