@@ -131,6 +131,7 @@ public class UserService {
         if (user.getEmail() != null)
             oldUser.setEmail(user.getEmail());
         if (user.getPassword() != null) {
+            oldUser.setPassword(user.getPassword());
             oldUser = makeUserPasswordEncoded(oldUser);
         }
         if (user.getRank() != null)
