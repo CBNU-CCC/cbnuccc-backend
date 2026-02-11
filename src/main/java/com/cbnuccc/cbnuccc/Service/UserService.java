@@ -51,14 +51,9 @@ public class UserService {
         return user;
     }
 
-    // make encoded string from given string.
-    private String encodePassword(String password) {
-        return passwordEncoder.encode(securityUtil.addPepper(password));
-    }
-
     // make user's password encoded.
     private MyUser encodeUserPassword(MyUser user, String planePassword) {
-        String encodedPassword = encodePassword(planePassword);
+        String encodedPassword = passwordEncoder.encode(securityUtil.addPepper(planePassword));
         user.setPassword(encodedPassword);
         return user;
     }
