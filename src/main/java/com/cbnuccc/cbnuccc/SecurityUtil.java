@@ -1,5 +1,7 @@
 package com.cbnuccc.cbnuccc;
 
+import java.util.Optional;
+
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -18,11 +20,20 @@ public class SecurityUtil {
         this.jwtKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtKey));
     }
 
+    public SecretKey getJwtKey() {
+        return this.jwtKey;
+    }
+
+    // return a password with pepper.
     public String addPepper(String password) {
         return password + pepper;
     }
 
-    public SecretKey getJwtKey() {
-        return this.jwtKey;
+    // return a token which is authString without "Bearer " if it presents.
+    // otherwise, it returns null.
+    public Optional<String> getAuthorizationToken(String authString) {
+        if (authString != null && authString.length() >= 8 && authString.startsWith("Bearer "))
+            return Optional.of(authString.substring(7));
+        return null;
     }
 }

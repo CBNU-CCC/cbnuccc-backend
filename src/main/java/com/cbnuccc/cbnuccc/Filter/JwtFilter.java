@@ -1,6 +1,7 @@
 package com.cbnuccc.cbnuccc.Filter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -9,6 +10,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Service.LoginService;
 
 import io.jsonwebtoken.Claims;
@@ -22,18 +24,22 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private LoginService loginService;
 
+    @Autowired
+    private SecurityUtil securityUtil;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        String jwtToken = "";
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwtToken = authHeader.substring(7);
-        } else {
+        // get Auth. header to get jwt token.
+        String authString = request.getHeader("Authorization");
+        Optional<String> _jwtToken = securityUtil.getAuthorizationToken(authString);
+        if (_jwtToken == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
+        String jwtToken = _jwtToken.get();
 
+        // extract given token to get cliams.
         Claims claim;
         try {
             claim = loginService.extractToken(jwtToken);
@@ -43,6 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
+        // final setting to login.
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 claim.get("email").toString(), null);
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
