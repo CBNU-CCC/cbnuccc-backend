@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.cbnuccc.cbnuccc.ErrorCode;
+import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
@@ -125,7 +125,7 @@ public class UserService {
         user.setUuid(UUID.randomUUID());
 
         if (checkDuplicatedUserByEmail(user.getEmail()))
-            return ErrorCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
+            return StatusCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
 
         // encoding the password.
         user = encodeUserPassword(user, user.getPassword());
@@ -136,7 +136,7 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.OK).body(createdUserDto);
         } catch (Exception e) {
             System.err.println(e);
-            return ErrorCode.SOMETHING_WENT_WRONG.makeErrorResponseEntity();
+            return StatusCode.SOMETHING_WENT_WRONG.makeErrorResponseEntity();
         }
     }
 
@@ -149,16 +149,16 @@ public class UserService {
     // update a user to given user by uuid.
     // if any given user's field is null,
     // the matched field of the user is not changed.
-    public ErrorCode updateUserByUuid(UUID uuid, MyUser user) {
+    public StatusCode updateUserByUuid(UUID uuid, MyUser user) {
         Optional<MyUser> _oldUser = userJpaRepository.findByUuid(uuid);
         if (_oldUser.isEmpty())
-            return ErrorCode.NO_USER_FOUND;
+            return StatusCode.NO_USER_FOUND;
 
         MyUser oldUser = _oldUser.get();
         if (user.getId() != null ||
                 user.getUuid() != null ||
                 user.getStudentId() != null)
-            return ErrorCode.CONNOT_CHANGE_IMPORTANT_INFORMATION;
+            return StatusCode.CONNOT_CHANGE_IMPORTANT_INFORMATION;
 
         // if the field value is not null, change it.
         if (user.getEmail() != null)
@@ -178,17 +178,17 @@ public class UserService {
             oldUser.setBirthDate(user.getBirthDate());
 
         userJpaRepository.save(oldUser);
-        return ErrorCode.NO_ERROR;
+        return StatusCode.NO_ERROR;
     }
 
     // delete a user by uuid.
-    public ErrorCode deleteUserByUuid(UUID uuid) {
+    public StatusCode deleteUserByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
-            return ErrorCode.NO_USER_FOUND;
+            return StatusCode.NO_USER_FOUND;
 
         MyUser user = _user.get();
         userJpaRepository.delete(user);
-        return ErrorCode.NO_ERROR;
+        return StatusCode.NO_ERROR;
     }
 }

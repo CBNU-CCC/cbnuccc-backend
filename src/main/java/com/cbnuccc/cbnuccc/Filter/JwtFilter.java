@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.cbnuccc.cbnuccc.ErrorCode;
+import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.ExcludePath;
 import com.cbnuccc.cbnuccc.SecurityUtil;
 
@@ -35,7 +35,9 @@ public class JwtFilter extends OncePerRequestFilter {
     private static final List<ExcludePath> EXCLUDE_LIST = List.of(
             new ExcludePath(HttpMethod.GET, "/user"),
             new ExcludePath(HttpMethod.GET, "/user/*"),
-            new ExcludePath(HttpMethod.POST, "/login"));
+            new ExcludePath(HttpMethod.POST, "/login"),
+            new ExcludePath(HttpMethod.GET, "/email"),
+            new ExcludePath(HttpMethod.POST, "/email"));
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -55,8 +57,8 @@ public class JwtFilter extends OncePerRequestFilter {
         Optional<String> _jwtToken = securityUtil.getAuthorizationToken(authString);
         if (_jwtToken == null) {
             response.sendError(
-                    ErrorCode.INVALID_TOKEN.getResponseStatus().value(),
-                    ErrorCode.INVALID_TOKEN.getErrorMessage());
+                    StatusCode.INVALID_TOKEN.getResponseStatus().value(),
+                    StatusCode.INVALID_TOKEN.getErrorMessage());
             return;
         }
         String jwtToken = _jwtToken.get();
@@ -67,8 +69,8 @@ public class JwtFilter extends OncePerRequestFilter {
             claim = securityUtil.extractToken(jwtToken);
         } catch (Exception e) {
             response.sendError(
-                    ErrorCode.INVALID_TOKEN.getResponseStatus().value(),
-                    ErrorCode.INVALID_TOKEN.getErrorMessage());
+                    StatusCode.INVALID_TOKEN.getResponseStatus().value(),
+                    StatusCode.INVALID_TOKEN.getErrorMessage());
             return;
         }
 

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cbnuccc.cbnuccc.ErrorCode;
+import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
@@ -49,7 +49,7 @@ public class UserController {
 
         List<LimitedUserDto> resultBody = (List<LimitedUserDto>) getUser(user).getBody();
         if (resultBody.size() == 0)
-            return ErrorCode.NO_USER_FOUND.makeErrorResponseEntity();
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
 
         LimitedUserDto result = resultBody.get(0);
         return ResponseEntity.ok(result);
@@ -61,7 +61,7 @@ public class UserController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _me = userService.findUserDtoByUuid(uuid);
         if (_me.isEmpty())
-            return ErrorCode.NO_USER_FOUND.makeErrorResponseEntity();
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
         UserDto me = _me.get();
         return ResponseEntity.ok(me);
     }
@@ -76,8 +76,8 @@ public class UserController {
     @PatchMapping("/user")
     public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody MyUser user) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        ErrorCode resultCode = userService.updateUserByUuid(uuid, user);
-        if (resultCode != ErrorCode.NO_ERROR)
+        StatusCode resultCode = userService.updateUserByUuid(uuid, user);
+        if (resultCode.checkIsError())
             return resultCode.makeErrorResponseEntity();
         return getMyUserData(authentication);
     }
@@ -88,8 +88,8 @@ public class UserController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         ResponseEntity<?> _deletedUser = getMyUserData(authentication);
 
-        ErrorCode resultCode = userService.deleteUserByUuid(uuid);
-        if (resultCode != ErrorCode.NO_ERROR || _deletedUser.getStatusCode() != HttpStatus.OK)
+        StatusCode resultCode = userService.deleteUserByUuid(uuid);
+        if (resultCode.checkIsError() || _deletedUser.getStatusCode() != HttpStatus.OK)
             return resultCode.makeErrorResponseEntity();
 
         UserDto deletedUser = (UserDto) _deletedUser.getBody();
