@@ -5,8 +5,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -37,7 +37,7 @@ public class UserController {
     public ResponseEntity<List<UserDto>> getUser(
             @ModelAttribute UserDto userDto) {
         List<UserDto> dtos = userService.findAllMatchedUsers(userDto);
-        return ResponseEntity.status(HttpStatus.OK).body(dtos);
+        return ResponseEntity.ok(dtos);
     }
 
     // get a user by uuid
@@ -51,7 +51,7 @@ public class UserController {
             return ErrorCode.NO_USER_FOUND.makeErrorResponseEntity();
 
         UserDto result = resultBody.get(0);
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+        return ResponseEntity.ok(result);
     }
 
     // create user, but the user's email should not be same with other's email.
@@ -61,8 +61,13 @@ public class UserController {
     }
 
     // update user by uuid
-    @PatchMapping("/user/{uuid}")
-    public ResponseEntity<?> updateUser(@PathVariable("uuid") UUID uuid, @RequestBody MyUser user) {
+    @PatchMapping("/user")
+    public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody MyUser user) {
+        // process given jwt token.
+        String uuidString = (String) authentication.getPrincipal();
+        UUID uuid = UUID.fromString(uuidString);
+
+        // update user.
         ErrorCode resultCode = userService.updateUserByUuid(uuid, user);
         if (resultCode != ErrorCode.NO_ERROR)
             return resultCode.makeErrorResponseEntity();
@@ -70,8 +75,13 @@ public class UserController {
     }
 
     // delete a user by uuid
-    @DeleteMapping("/user/{uuid}")
-    public ResponseEntity<?> deleteUser(@PathVariable("uuid") UUID uuid) {
+    @DeleteMapping("/user")
+    public ResponseEntity<?> deleteUser(Authentication authentication) {
+        // process given jwt token.
+        String uuidString = (String) authentication.getPrincipal();
+        UUID uuid = UUID.fromString(uuidString);
+
+        // delete user.
         Optional<UserDto> _deletedUser = userService.findUserByUuid(uuid);
 
         ErrorCode resultCode = userService.deleteUserByUuid(uuid);

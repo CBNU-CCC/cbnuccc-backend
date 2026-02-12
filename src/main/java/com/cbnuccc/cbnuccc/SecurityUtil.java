@@ -7,6 +7,8 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
@@ -35,5 +37,12 @@ public class SecurityUtil {
         if (authString != null && authString.length() >= 8 && authString.startsWith("Bearer "))
             return Optional.of(authString.substring(7));
         return null;
+    }
+
+    // extract given jwt token.
+    public Claims extractToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(this.jwtKey).build()
+                .parseSignedClaims(token).getPayload();
+        return claims;
     }
 }
