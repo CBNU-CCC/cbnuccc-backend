@@ -16,14 +16,30 @@ import io.jsonwebtoken.security.Keys;
 public class SecurityUtil {
     private final String pepper;
     private final SecretKey jwtKey;
+    private final String mailgunKey;
+    private final String mailgunDomain;
 
-    public SecurityUtil(@Value("${pepper}") String pepper, @Value("${jwtkey}") String jwtKey) {
+    public SecurityUtil(
+            @Value("${pepper}") String pepper,
+            @Value("${jwtkey}") String jwtKey,
+            @Value("${mailgun.key}") String mailgunKey,
+            @Value("${mailgun.domain}") String mailgunDomain) {
         this.pepper = pepper;
         this.jwtKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtKey));
+        this.mailgunKey = mailgunKey;
+        this.mailgunDomain = mailgunDomain;
     }
 
     public SecretKey getJwtKey() {
         return this.jwtKey;
+    }
+
+    public String getMailgunKey() {
+        return this.mailgunKey;
+    }
+
+    public String getMailgunDomain() {
+        return this.mailgunDomain;
     }
 
     // return a password with pepper.

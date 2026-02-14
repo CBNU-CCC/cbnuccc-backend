@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,9 +13,6 @@ import com.cbnuccc.cbnuccc.Service.VerificationService;
 
 @RestController
 public class VerificationController {
-    @Autowired
-    JavaMailSender javaMailSender;
-
     @Autowired
     VerificationService verificationService;
 

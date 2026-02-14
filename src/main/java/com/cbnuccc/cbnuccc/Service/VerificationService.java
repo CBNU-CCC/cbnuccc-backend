@@ -4,12 +4,12 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
@@ -17,12 +17,18 @@ import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
 public class VerificationService {
-    private final JavaMailSender javaMailSender;
     private final VerificationJpaRepository verificationJpaRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final SecurityUtil securityUtil;
 
     // if the request is expired, it returns true.
     // otherwise, it returns false.
@@ -59,22 +65,30 @@ public class VerificationService {
 
     // send a email with the code.
     public StatusCode sendMailCode(String to, String code) {
+        String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 인증 코드를 알려드립니다.";
+        String messageCode = "인증 코드: " + code;
+        String messageFooter = "위 코드를 아무에게도 공개하지 마세요!\n감사합니다.";
+        final String apiKey = securityUtil.getMailgunKey();
+        final String senderDomain = securityUtil.getMailgunDomain();
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject("[CBNU CCC] 🌱 회원가입 인증 코드입니다!");
+            HttpResponse<JsonNode> request = Unirest
+                    .post("https://api.mailgun.net/v3/" + senderDomain + "/messages")
+                    .basicAuth("api", apiKey)
+                    .queryString("from", "CBNU CCC <postmaster@" + senderDomain + ">")
+                    .queryString("to", to)
+                    .queryString("subject", "[CBNU CCC] 🌱 회원가입 인증 코드입니다!")
+                    .queryString("text",
+                            messageHeader + "\n\n" + messageCode + "\n\n" + messageFooter)
+                    .asJson();
 
-            String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 인증 코드를 알려드립니다.";
-            String messageCode = "인증 코드: " + code;
-            String messageFooter = "감사합니다.";
-            message.setText(messageHeader + "\n\n" + messageCode + "\n\n" + messageFooter);
-
-            javaMailSender.send(message);
-            return StatusCode.NO_ERROR;
-        } catch (Exception e) {
-            System.err.println(e);
+            // that the status code is 200 means doing right operation.
+            if (request.getStatus() != 200)
+                return StatusCode.SOMETHING_WENT_WRONG;
+        } catch (UnirestException e) {
+            e.printStackTrace();
             return StatusCode.SOMETHING_WENT_WRONG;
         }
+        return StatusCode.NO_ERROR;
     }
 
     // save the email and the code.
@@ -91,7 +105,7 @@ public class VerificationService {
             }
 
             verification.setExpireAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")).plusMinutes(5));
-            verification.setCode(code);
+            verification.setCode(passwordEncoder.encode(securityUtil.addPepper(code)));
             verification.setIsVerified(false);
 
             verificationJpaRepository.save(verification);
@@ -112,7 +126,9 @@ public class VerificationService {
         if (verification.getIsVerified())
             return StatusCode.ALREADY_VERIFIED;
 
-        if (!verification.getCode().equals(code))
+        // check that is given code right.
+        boolean isRightCode = passwordEncoder.matches(securityUtil.addPepper(code), verification.getCode());
+        if (!isRightCode)
             return StatusCode.WRONG_CODE;
 
         if (checkExpiredEmailRequest(email)) {
