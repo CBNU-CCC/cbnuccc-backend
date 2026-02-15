@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Example;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +16,7 @@ import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
+import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
@@ -143,15 +142,15 @@ public class UserService {
 
     // create a user.
     @Transactional
-    public ResponseEntity<?> createUser(MyUser user) {
+    public DataWithStatusCode<LimitedUserDto> createUser(MyUser user) {
         user.setUuid(UUID.randomUUID());
         String email = user.getEmail();
 
         if (checkDuplicatedUserByEmail(email))
-            return StatusCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
+            return new DataWithStatusCode<>(StatusCode.DUPLICATED_EMAIL, null);
 
         if (!checkIsVerifiedEmail(email))
-            return StatusCode.NOT_VERIFIED.makeErrorResponseEntity();
+            return new DataWithStatusCode<>(StatusCode.NOT_VERIFIED, null);
 
         // encoding the password.
         user = encodeUserPassword(user, user.getPassword());
@@ -159,11 +158,11 @@ public class UserService {
         try {
             MyUser createdUser = userJpaRepository.save(user);
             verificationJpaRepository.deleteByEmail(email); // delete verified user from verification table.
-            UserDto createdUserDto = userToUserDto(createdUser);
-            return ResponseEntity.status(HttpStatus.OK).body(createdUserDto);
+            LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser));
+            return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
         } catch (Exception e) {
             System.err.println(e);
-            return StatusCode.SOMETHING_WENT_WRONG.makeErrorResponseEntity();
+            return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
 
@@ -209,7 +208,11 @@ public class UserService {
             return StatusCode.NO_USER_FOUND;
 
         MyUser user = _user.get();
-        userJpaRepository.delete(user);
-        return StatusCode.NO_ERROR;
+        try {
+            userJpaRepository.delete(user);
+            return StatusCode.NO_ERROR;
+        } catch (Exception e) {
+            return StatusCode.SOMETHING_WENT_WRONG;
+        }
     }
 }

@@ -21,6 +21,7 @@ import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Service.UserService;
+import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 @RestController
@@ -69,7 +70,11 @@ public class UserController {
     // create user, but the user's email should not be same with other's email.
     @PostMapping("/user")
     public ResponseEntity<?> createUser(@RequestBody MyUser user) {
-        return userService.createUser(user);
+        DataWithStatusCode<LimitedUserDto> result = userService.createUser(user);
+        StatusCode code = result.code();
+        if (code.checkIsError())
+            return code.makeErrorResponseEntity();
+        return ResponseEntity.ok(result.data());
     }
 
     // update user by uuid
