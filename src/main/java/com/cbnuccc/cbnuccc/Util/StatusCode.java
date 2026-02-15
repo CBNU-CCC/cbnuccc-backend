@@ -46,10 +46,12 @@ public enum StatusCode {
                 "message", errorMessage));
     }
 
-    // make response entity of when returning an error with a log.
-    public ResponseEntity<?> makeErrorResponseEntity(UUID whoDid) {
-        LogUtil.printErrorLog(this, whoDid);
-        return makeErrorResponseEntity();
+    // make response entity of when returning an error with a error log.
+    public ResponseEntity<?> makeErrorResponseEntityAndPrintLog(UUID uuid, String subHeader) {
+        LogUtil.printErrorLog(this, uuid, subHeader);
+        return ResponseEntity.status(responseStatus).body(Map.of(
+                "errorCode", errorCode,
+                "message", errorMessage));
     }
 
     public boolean checkIsError() {

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +21,7 @@ import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
+import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 @RestController
@@ -39,22 +39,28 @@ public class UserController {
     @GetMapping("/user")
     public ResponseEntity<List<LimitedUserDto>> getUser(@ModelAttribute LimitedUserDto userDto) {
         List<LimitedUserDto> dtos = userService.findAllMatchedLimitedUserDtos(userDto);
+        String log = String.format("successfully got %d users", dtos.size());
+        LogUtil.printBasicInfoLog("GOT USER", log, null);
         return ResponseEntity.ok(dtos);
     }
 
     // get a user by uuid
-    @GetMapping("/user/{uuid}")
-    public ResponseEntity<?> getUserByUuid(@PathVariable("uuid") UUID uuid) {
-        LimitedUserDto user = new LimitedUserDto();
-        user.setUuid(uuid);
+    // @Deprecated
+    // @GetMapping("/user/{uuid}")
+    // public ResponseEntity<?> getUserByUuid(@PathVariable("uuid") UUID uuid) {
+    // LimitedUserDto user = new LimitedUserDto();
+    // user.setUuid(uuid);
 
-        List<LimitedUserDto> resultBody = (List<LimitedUserDto>) getUser(user).getBody();
-        if (resultBody.size() == 0)
-            return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
+    // List<LimitedUserDto> resultBody = (List<LimitedUserDto>)
+    // getUser(user).getBody();
+    // if (resultBody.size() == 0)
+    // return StatusCode.NO_USER_FOUND.makeErrorResponseEntityAndPrintLog(uuid, "GOT
+    // USER");
 
-        LimitedUserDto result = resultBody.get(0);
-        return ResponseEntity.ok(result);
-    }
+    // LogUtil.printBasicInfoLog("GOT USER", "successfully got a user", uuid);
+    // LimitedUserDto result = resultBody.get(0);
+    // return ResponseEntity.ok(result);
+    // }
 
     // get my user data
     @GetMapping("/me")
@@ -62,8 +68,9 @@ public class UserController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _me = userService.findUserDtoByUuid(uuid);
         if (_me.isEmpty())
-            return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntityAndPrintLog(uuid, "GOT USER");
         UserDto me = _me.get();
+        LogUtil.printBasicInfoLog("GOT USER", "successfully got my data", uuid, "ME");
         return ResponseEntity.ok(me);
     }
 
@@ -73,7 +80,8 @@ public class UserController {
         DataWithStatusCode<LimitedUserDto> result = userService.createUser(user);
         StatusCode code = result.code();
         if (code.checkIsError())
-            return code.makeErrorResponseEntity();
+            return code.makeErrorResponseEntityAndPrintLog(null, "CREATED USER");
+        LogUtil.printBasicInfoLog("CREATED USER", "successfully created a user", null);
         return ResponseEntity.ok(result.data());
     }
 
@@ -83,7 +91,9 @@ public class UserController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         StatusCode resultCode = userService.updateUserByUuid(uuid, user);
         if (resultCode.checkIsError())
-            return resultCode.makeErrorResponseEntity();
+            return resultCode.makeErrorResponseEntityAndPrintLog(uuid, "PATCHED USER");
+
+        LogUtil.printBasicInfoLog("PATCHED USER", "successfully updated a user", uuid);
         return getMyUserData(authentication);
     }
 
@@ -95,9 +105,10 @@ public class UserController {
 
         StatusCode resultCode = userService.deleteUserByUuid(uuid);
         if (resultCode.checkIsError() || _deletedUser.getStatusCode() != HttpStatus.OK)
-            return resultCode.makeErrorResponseEntity();
+            return resultCode.makeErrorResponseEntityAndPrintLog(uuid, "DELETED USER");
 
         UserDto deletedUser = (UserDto) _deletedUser.getBody();
+        LogUtil.printBasicInfoLog("DELETED USER", "successfully deleted a user", uuid);
         return ResponseEntity.ok(deletedUser);
     }
 }

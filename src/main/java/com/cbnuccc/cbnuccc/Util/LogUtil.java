@@ -15,15 +15,42 @@ public class LogUtil {
         return uuidString;
     }
 
+    // print a basic log in INFO LEVEL.
+    public static void printBasicInfoLog(String header, String message, UUID uuid) {
+        String uuidString = makeUuidString(uuid);
+        log.info("[{}] {}, uuid={}", header, message, uuidString);
+    }
+
+    // print a basic log with sub-header in INFO LEVEL.
+    public static void printBasicInfoLog(String header, String message, UUID uuid, String subHeader) {
+        printBasicInfoLog(header + "/" + subHeader, message, uuid);
+    }
+
+    // print a basic log in WARN LEVEL.
+    public static void printBasicWarnLog(String header, String message, UUID uuid) {
+        String uuidString = makeUuidString(uuid);
+        log.warn("[{}] {}, uuid={}", header, message, uuidString);
+    }
+
+    // print a basic log with sub-header in WARN LEVEL.
+    public static void printBasicWarnLog(String header, String message, UUID uuid, String subHeader) {
+        printBasicWarnLog(header + "/" + subHeader, message, uuid);
+    }
+
     // print a log showing request's method, path and a part of uuid in INFO LEVEL.
     public static void printEnteringLog(HttpMethod method, String path, UUID uuid) {
-        String uuidString = makeUuidString(uuid);
-        log.info("[ENTERED] {} {}, uuid={}", method.toString(), path, uuidString);
+        printBasicInfoLog("ENTERED", String.format("%s %s", method.toString(), path), uuid);
     }
 
     // print a log showing an error in WARN LEVEL.
     public static void printErrorLog(StatusCode code, UUID uuid) {
-        String uuidString = makeUuidString(uuid);
-        log.warn("[ERROR CODE] {} - {}, uuid={}", code.getResponseStatus(), code.getErrorMessage(), uuidString);
+        String message = String.format("%s - %s", code.getResponseStatus(), code.getErrorMessage());
+        printBasicWarnLog("ERROR", message, uuid);
+    }
+
+    // print a log showing an error and sub-header in WARN LEVEL.
+    public static void printErrorLog(StatusCode code, UUID uuid, String subHeader) {
+        String message = String.format("%s - %s", code.getResponseStatus(), code.getErrorMessage());
+        printBasicWarnLog("ERROR", message, uuid, subHeader);
     }
 }
