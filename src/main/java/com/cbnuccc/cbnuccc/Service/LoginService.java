@@ -7,9 +7,9 @@ import javax.crypto.SecretKey;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
+import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 
 import io.jsonwebtoken.Jwts;
 

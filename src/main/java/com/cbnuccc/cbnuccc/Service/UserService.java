@@ -12,14 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.cbnuccc.cbnuccc.StatusCode;
-import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
+import com.cbnuccc.cbnuccc.Util.SecurityUtil;
+import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

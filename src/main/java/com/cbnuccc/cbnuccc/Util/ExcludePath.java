@@ -1,4 +1,4 @@
-package com.cbnuccc.cbnuccc;
+package com.cbnuccc.cbnuccc.Util;
 
 import org.springframework.http.HttpMethod;
 

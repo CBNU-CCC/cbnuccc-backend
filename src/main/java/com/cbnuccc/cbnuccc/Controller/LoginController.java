@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cbnuccc.cbnuccc.SecurityUtil;
 import com.cbnuccc.cbnuccc.Dto.TokenDto;
 import com.cbnuccc.cbnuccc.Service.LoginService;
+import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 

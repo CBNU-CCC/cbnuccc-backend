@@ -9,10 +9,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.cbnuccc.cbnuccc.SecurityUtil;
-import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
+import com.cbnuccc.cbnuccc.Util.SecurityUtil;
+import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

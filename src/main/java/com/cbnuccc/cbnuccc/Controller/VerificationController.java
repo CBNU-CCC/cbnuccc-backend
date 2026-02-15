@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cbnuccc.cbnuccc.StatusCode;
 import com.cbnuccc.cbnuccc.Service.VerificationService;
+import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 @RestController
 public class VerificationController {
