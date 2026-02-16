@@ -109,6 +109,15 @@ public class UserService {
         return Optional.of(result);
     }
 
+    // find UserDto by given email.
+    public Optional<UserDto> findUserDtoByEmail(String email) {
+        Optional<MyUser> _user = userJpaRepository.findByEmail(email);
+        if (_user.isEmpty())
+            return Optional.ofNullable(null);
+        UserDto result = userToUserDto(_user.get());
+        return Optional.of(result);
+    }
+
     // find LimitedUserDto by given uuid.
     public Optional<LimitedUserDto> findLimitedUserDtoByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);

@@ -1,6 +1,7 @@
 package com.cbnuccc.cbnuccc.Controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,6 +71,19 @@ public class UserController {
         UserDto me = _me.get();
         LogUtil.printBasicInfoLog("GOT USER", "successfully got my data", uuid, "ME");
         return ResponseEntity.ok(me);
+    }
+
+    // check email duplication
+    @GetMapping("/email-duplication")
+    public ResponseEntity<?> checkEmailDuplication(@RequestBody Map<String, String> body) {
+        if (!body.containsKey("email"))
+            return StatusCode.NO_ENOUGH_ARGS.makeErrorResponseEntityAndPrintLog(null, "CHECK DUPLICATION");
+        String email = body.get("email");
+
+        Optional<UserDto> _user = userService.findUserDtoByEmail(email);
+        if (_user.isPresent())
+            return StatusCode.DUPLICATED_EMAIL.makeErrorResponseEntityAndPrintLog(null, "CHECK DUPLICATION");
+        return StatusCode.NOT_DUPLICATED_EMAIL.makeErrorResponseEntityAndPrintLog(null, "CHECK DUPLICATION");
     }
 
     // create user, but the user's email should not be same with other's email.

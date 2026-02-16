@@ -22,7 +22,8 @@ public enum StatusCode {
     REQUEST_IS_EXPIRED(HttpStatus.BAD_REQUEST, "The request is expired.", 7),
     NO_ENOUGH_ARGS(HttpStatus.BAD_REQUEST, "There are no enough arguments.", 8),
     ALREADY_VERIFIED(HttpStatus.OK, "Given code is already verified.", 9),
-    NOT_VERIFIED(HttpStatus.FORBIDDEN, "Given user is not verified.", 10);
+    NOT_VERIFIED(HttpStatus.FORBIDDEN, "Given user is not verified.", 10),
+    NOT_DUPLICATED_EMAIL(HttpStatus.OK, "Given email is not duplicate.", 11);
 
     @Getter
     private final HttpStatusCode responseStatus;
