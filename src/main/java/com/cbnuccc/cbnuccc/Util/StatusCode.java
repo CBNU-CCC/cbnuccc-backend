@@ -23,7 +23,8 @@ public enum StatusCode {
     NO_ENOUGH_ARGS(HttpStatus.BAD_REQUEST, "There are no enough arguments.", 8),
     ALREADY_VERIFIED(HttpStatus.OK, "Given code is already verified.", 9),
     NOT_VERIFIED(HttpStatus.FORBIDDEN, "Given user is not verified.", 10),
-    NOT_DUPLICATED_EMAIL(HttpStatus.OK, "Given email is not duplicate.", 11);
+    NOT_DUPLICATED_EMAIL(HttpStatus.OK, "Given email is not duplicate.", 11),
+    NO_IMAGE_FOUND(HttpStatus.NOT_FOUND, "Cannot found requested profile image.", 12);
 
     @Getter
     private final HttpStatusCode responseStatus;

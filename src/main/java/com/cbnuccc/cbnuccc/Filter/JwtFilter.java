@@ -51,7 +51,8 @@ public class JwtFilter extends OncePerRequestFilter {
             new ExcludePath(HttpMethod.GET, "/user/*"),
             new ExcludePath(HttpMethod.POST, "/login"),
             new ExcludePath(HttpMethod.POST, "/verification"),
-            new ExcludePath(HttpMethod.POST, "/verification/confirmation"));
+            new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
+            new ExcludePath(HttpMethod.GET, "/profile-image/*"));
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

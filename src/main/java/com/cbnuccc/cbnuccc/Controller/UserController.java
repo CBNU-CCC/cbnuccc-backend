@@ -19,11 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
-import com.cbnuccc.cbnuccc.Service.ImageService;
 import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
@@ -33,9 +31,6 @@ import com.cbnuccc.cbnuccc.Util.StatusCode;
 public class UserController {
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private ImageService imageService;
 
     // main page
     @GetMapping("/")
@@ -130,13 +125,27 @@ public class UserController {
         return ResponseEntity.ok(deletedUser);
     }
 
-    @PostMapping("/image")
+    // upload given user's profile image by uuid (upsert)
+    @PostMapping("/profile-image")
     public ResponseEntity<?> uploadProfileImage(Authentication authentication,
             @RequestParam("file") MultipartFile file) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
         if (_user.isEmpty())
-            return StatusCode.NO_USER_FOUND.makeErrorResponseEntityAndPrintLog(uuid, "UPLOAD PROFILE IMAGE");
-        return imageService.uploadProfileImage(file).makeErrorResponseEntityAndPrintLog(uuid, "UPLOAD PROFILE IMAGE");
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntityAndPrintLog(uuid, "UPLOADED PROFILE IMAGE");
+
+        return userService.uploadProfileImage(file, uuid).makeErrorResponseEntityAndPrintLog(uuid,
+                "UPLOADED PROFILE IMAGE");
+    }
+
+    // delete given user's profile image by uuid
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<?> deleteProfileImage(Authentication authentication) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
+        if (_user.isEmpty())
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntityAndPrintLog(uuid, "DELETED PROFILE IMAGE");
+
+        return userService.deleteProfileImage(uuid).makeErrorResponseEntityAndPrintLog(uuid, "DELETED PROFILE IMAGE");
     }
 }

@@ -6,10 +6,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Example;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import com.cbnuccc.cbnuccc.Config.SupabaseProperties;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
@@ -30,6 +34,8 @@ public class UserService {
     private final VerificationJpaRepository verificationJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
+    private final WebClient webClient;
+    private final SupabaseProperties supabaseProperties;
 
     // make User to UserDto.
     private UserDto userToUserDto(MyUser user) {
@@ -220,6 +226,59 @@ public class UserService {
             userJpaRepository.delete(user);
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
+            return StatusCode.SOMETHING_WENT_WRONG;
+        }
+    }
+
+    // upload user profile image by uuid.
+    public StatusCode uploadProfileImage(MultipartFile file, UUID uuid) {
+        try {
+            // extract extension
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains("."))
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+
+            // set file name
+            String fileName = uuid.toString();
+            String path = "profile/" + fileName;
+
+            // upload
+            webClient.post()
+                    .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
+                    .header("Authorization", "Bearer " + supabaseProperties.getKey())
+                    .header("apikey", supabaseProperties.getKey())
+                    .header("Content-Type", "image/" + extension)
+                    .header("x-upsert", "true")
+                    .contentType(MediaType.parseMediaType(file.getContentType()))
+                    .bodyValue(file.getBytes())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            return StatusCode.NO_ERROR;
+        } catch (Exception e) {
+            return StatusCode.SOMETHING_WENT_WRONG;
+        }
+    }
+
+    // delete user profile image by uuid.
+    public StatusCode deleteProfileImage(UUID uuid) {
+        try {
+            // set file name
+            String fileName = uuid.toString();
+            String path = "profile/" + fileName;
+
+            // delete
+            webClient.delete()
+                    .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
+                    .header("Authorization", "Bearer " + supabaseProperties.getKey())
+                    .header("apikey", supabaseProperties.getKey())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            return StatusCode.NO_ERROR;
+        } catch (Exception e) {
+            e.printStackTrace();
             return StatusCode.SOMETHING_WENT_WRONG;
         }
     }

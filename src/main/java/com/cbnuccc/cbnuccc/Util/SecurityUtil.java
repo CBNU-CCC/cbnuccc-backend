@@ -28,25 +28,15 @@ public class SecurityUtil {
     @Getter
     private final String mailgunDomain;
 
-    @Getter
-    private final String supbaseBaseUrl;
-
-    @Getter
-    private final String supabaseKey;
-
     public SecurityUtil(
             @Value("${pepper}") String pepper,
             @Value("${jwtkey}") String jwtKey,
             @Value("${mailgun.key}") String mailgunKey,
-            @Value("${mailgun.domain}") String mailgunDomain,
-            @Value("${supabase.base-url}") String supbaseBaseUrl,
-            @Value("${supabase.key}") String supabaseKey) {
+            @Value("${mailgun.domain}") String mailgunDomain) {
         this.pepper = pepper;
         this.jwtKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtKey));
         this.mailgunKey = mailgunKey;
         this.mailgunDomain = mailgunDomain;
-        this.supbaseBaseUrl = supbaseBaseUrl;
-        this.supabaseKey = supabaseKey;
     }
 
     // return a password with pepper.
