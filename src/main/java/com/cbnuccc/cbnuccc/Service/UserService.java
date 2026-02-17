@@ -170,7 +170,6 @@ public class UserService {
             LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser));
             return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
         } catch (Exception e) {
-            System.err.println(e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
