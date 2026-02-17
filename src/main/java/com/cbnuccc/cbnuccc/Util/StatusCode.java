@@ -49,7 +49,13 @@ public enum StatusCode {
 
     // make response entity of when returning an error with a error log.
     public ResponseEntity<?> makeErrorResponseEntityAndPrintLog(UUID uuid, String subHeader) {
-        LogUtil.printErrorLog(this, uuid, subHeader);
+        if (this.checkIsError())
+            LogUtil.printErrorLog(this, uuid, subHeader);
+        else
+            LogUtil.printBasicInfoLog(subHeader,
+                    String.format("%s - %s", responseStatus.toString(), errorMessage),
+                    uuid);
+
         return ResponseEntity.status(responseStatus).body(Map.of(
                 "errorCode", errorCode,
                 "message", errorMessage));
