@@ -1,7 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,7 +34,7 @@ public class LoginController {
         String token = loginService.createToken(auth, data.get("email"));
         TokenDto tokenDto = new TokenDto(token);
 
-        LogUtil.printBasicInfoLog("LOGIN", "successfully logged-in", UUID.fromString(data.get("uuid")));
+        LogUtil.printBasicInfoLog("LOGIN", "successfully logged-in", null);
         return ResponseEntity.ok(tokenDto);
     }
 }
