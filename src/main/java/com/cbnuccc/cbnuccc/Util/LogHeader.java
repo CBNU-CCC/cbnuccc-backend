@@ -14,7 +14,11 @@ public enum LogHeader {
     DELETE_PROFILE_IMAGE,
     LOGIN,
     SEND_REGISTRATION_EMAIL,
-    CONFIRM_REGISTRATION_CODE;
+    CONFIRM_REGISTRATION_CODE,
+    CREATE_PRAYER,
+    GET_PRAYER,
+    UPDATE_PRAYER,
+    DELETE_PRAYER;
 
     @Getter
     private final String header;

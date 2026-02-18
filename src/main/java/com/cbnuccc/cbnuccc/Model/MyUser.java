@@ -44,5 +44,6 @@ public class MyUser {
     private String studentId;
 
     // UserDto
+    // TODO: delete birthDate
     private LocalDate birthDate;
 }
