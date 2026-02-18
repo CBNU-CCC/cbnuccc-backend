@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cbnuccc.cbnuccc.Dto.TokenDto;
 import com.cbnuccc.cbnuccc.Service.LoginService;
+import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 
@@ -34,7 +35,7 @@ public class LoginController {
         String token = loginService.createToken(auth, data.get("email"));
         TokenDto tokenDto = new TokenDto(token);
 
-        LogUtil.printBasicInfoLog("LOGIN", "successfully logged-in", null);
+        LogUtil.printBasicInfoLog(LogHeader.LOGIN, "successfully logged-in", null);
         return ResponseEntity.ok(tokenDto);
     }
 }
