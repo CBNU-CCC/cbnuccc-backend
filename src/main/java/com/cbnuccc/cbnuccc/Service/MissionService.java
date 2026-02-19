@@ -66,11 +66,11 @@ public class MissionService {
     }
 
     // create a mission
-    public StatusCode createMission(MissionDto missionDto, UUID uuid) {
+    public DataWithStatusCode<MissionDto> createMission(MissionDto missionDto, UUID uuid) {
         // find author user.
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
-            return StatusCode.NO_USER_FOUND;
+            return new DataWithStatusCode<>(StatusCode.NO_USER_FOUND, null);
         MyUser user = _user.get();
 
         // create a mission instance
@@ -84,11 +84,11 @@ public class MissionService {
 
         try {
             // save it.
-            missionJpaRepository.save(mission);
-            return StatusCode.NO_ERROR;
+            Mission createdMission = missionJpaRepository.save(mission);
+            return new DataWithStatusCode<>(StatusCode.NO_ERROR, missionToMissionDto(createdMission));
         } catch (Exception e) {
             LogUtil.printBasicWarnLog(LogHeader.CREATE_MISSION, e.getMessage(), uuid);
-            return StatusCode.SOMETHING_WENT_WRONG;
+            return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
 

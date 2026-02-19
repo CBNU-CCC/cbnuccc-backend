@@ -70,8 +70,12 @@ public class MissionController {
     @PostMapping("/mission")
     public ResponseEntity<?> createMission(Authentication authentication, @RequestBody MissionDto missionDto) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        return missionService.createMission(missionDto, uuid)
-                .makeErrorResponseEntityAndPrintLog(LogHeader.CREATE_MISSION, uuid);
+        DataWithStatusCode<MissionDto> result = missionService.createMission(missionDto, uuid);
+        if (result.code().checkIsError())
+            return result.code().makeErrorResponseEntityAndPrintLog(LogHeader.CREATE_MISSION, uuid);
+
+        MissionDto createdMissionDto = result.data();
+        return ResponseEntity.ok(createdMissionDto);
     }
 
     // update given mission.
