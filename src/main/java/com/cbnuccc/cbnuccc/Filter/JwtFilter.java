@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -58,6 +59,7 @@ public class JwtFilter extends OncePerRequestFilter {
             new ExcludePath(HttpMethod.GET, "/mission"),
             new ExcludePath(HttpMethod.GET, "/mission/*"));
 
+    // check for not filtering
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
@@ -74,6 +76,7 @@ public class JwtFilter extends OncePerRequestFilter {
         return false;
     }
 
+    // filter
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -105,12 +108,20 @@ public class JwtFilter extends OncePerRequestFilter {
                 request.getRequestURI(),
                 UUID.fromString((String) claim.get("uuid")));
 
+        MDC.put("user_uuid", claim.get("uuid").toString());
+        MDC.put("endpoint", request.getRequestURI());
+        MDC.put("method", request.getMethod());
+
         // final setting to login.
         List<SimpleGrantedAuthority> roles = List.of(new SimpleGrantedAuthority("ROLE_" + claim.get("rank")));
         var authToken = new UsernamePasswordAuthenticationToken(claim.get("uuid").toString(), null, roles);
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.clear();
+        }
     }
 }

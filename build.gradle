@@ -40,6 +40,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
 	implementation 'com.mashape.unirest:unirest-java:1.4.9'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
 
 }
 
