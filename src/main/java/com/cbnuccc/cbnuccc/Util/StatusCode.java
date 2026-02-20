@@ -26,7 +26,8 @@ public enum StatusCode {
     NOT_DUPLICATED_EMAIL(HttpStatus.OK, "Given email is not duplicate.", 11),
     EMPTY_GIVEN_IMAGE(HttpStatus.NOT_FOUND, "Given image is empty.", 12),
     NO_PRAYER_FOUND(HttpStatus.NOT_FOUND, "Cannot found given prayer.", 13),
-    NO_MISSION_FOUND(HttpStatus.NOT_FOUND, "Cannot found given mission.", 14);
+    NO_MISSION_FOUND(HttpStatus.NOT_FOUND, "Cannot found given mission.", 14),
+    EXCEED_1MB(HttpStatus.BAD_REQUEST, "Compressed file size cannot exceed 1MB.", 15);
 
     @Getter
     private final HttpStatusCode responseStatus;

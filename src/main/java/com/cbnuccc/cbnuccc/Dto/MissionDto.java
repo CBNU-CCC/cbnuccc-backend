@@ -24,4 +24,6 @@ public class MissionDto {
     private LocalDate endTerm;
 
     private String season;
+
+    private Short imageCount;
 }

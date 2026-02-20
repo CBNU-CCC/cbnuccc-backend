@@ -37,4 +37,6 @@ public class Mission {
     private LocalDate endTerm;
 
     private String season;
+
+    private Short imageCount;
 }

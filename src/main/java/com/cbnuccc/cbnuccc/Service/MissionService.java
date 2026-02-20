@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import com.cbnuccc.cbnuccc.Config.SupabaseProperties;
 import com.cbnuccc.cbnuccc.Dto.MissionDto;
 import com.cbnuccc.cbnuccc.Model.Mission;
 import com.cbnuccc.cbnuccc.Model.MyUser;
@@ -26,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class MissionService {
     private final MissionJpaRepository missionJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final WebClient webClient;
+    private final SupabaseProperties supabaseProperties;
 
     private MissionDto missionToMissionDto(Mission mission) {
         return new MissionDto(
@@ -35,7 +41,23 @@ public class MissionService {
                 mission.getSite(),
                 mission.getStartTerm(),
                 mission.getEndTerm(),
-                mission.getSeason());
+                mission.getSeason(),
+                mission.getImageCount());
+    }
+
+    private void deleteSpecificMissionImage(int id, short imageId) {
+        // set file name
+        String fileName = String.format("%d-%d", id, imageId);
+        String path = "mission/" + fileName;
+
+        // delete
+        webClient.delete()
+                .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
+                .header("Authorization", "Bearer " + supabaseProperties.getKey())
+                .header("apikey", supabaseProperties.getKey())
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
     }
 
     // get all missions
@@ -133,5 +155,87 @@ public class MissionService {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION, e.getMessage(), null);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
+    }
+
+    // upload mission images.
+    public StatusCode uploadMissionImages(List<MultipartFile> files, int id, UUID uuid) {
+        // verify auth information to update #{id} mission board.
+        Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
+        if (_mission.isEmpty())
+            return StatusCode.NO_MISSION_FOUND;
+        Mission mission = _mission.get();
+
+        // set mission's image count to 0
+        mission.setImageCount((short) 0);
+
+        for (short i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+
+            try {
+                // extract extension
+                String originalFilename = file.getOriginalFilename();
+                String extension = "";
+                if (originalFilename != null && originalFilename.contains("."))
+                    extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+
+                // set file name
+                String fileName = String.format("%d-%d", id, i);
+                String path = "mission/" + fileName;
+
+                // upload it
+                webClient.post()
+                        .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
+                        .header("Authorization", "Bearer " + supabaseProperties.getKey())
+                        .header("apikey", supabaseProperties.getKey())
+                        .header("Content-Type", "image/" + extension)
+                        .header("x-upsert", "true")
+                        .contentType(MediaType.parseMediaType(file.getContentType()))
+                        .bodyValue(file.getBytes())
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+            } catch (Exception e) {
+                // TODO: if something went wrong, delete all files.
+                LogUtil.printBasicWarnLog(LogHeader.UPLOAD_PROFILE_IMAGE, e.getMessage(), uuid);
+                return StatusCode.SOMETHING_WENT_WRONG;
+            }
+        }
+
+        mission.setImageCount((short) files.size());
+        try {
+            missionJpaRepository.save(mission);
+        } catch (Exception e) {
+            LogUtil.printBasicWarnLog(LogHeader.UPLOAD_PROFILE_IMAGE, e.getMessage(), uuid);
+        }
+        return StatusCode.NO_ERROR;
+    }
+
+    public StatusCode deleteAllMissionImages(int id, UUID uuid) {
+        // check if #{id} mission is made by user whose uuid is {uuid}
+        Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
+        if (_mission.isEmpty())
+            return StatusCode.NO_MISSION_FOUND;
+        Mission mission = _mission.get();
+
+        // delete all images
+        short imageCount = mission.getImageCount();
+        for (short i = 0; i < imageCount; i++) {
+            try {
+                // delete it
+                deleteSpecificMissionImage(id, i);
+            } catch (Exception e) {
+                LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION_IMAGE, e.getMessage(), null);
+                return StatusCode.SOMETHING_WENT_WRONG;
+            }
+        }
+
+        // set image_count to 0, because there is no image in the storage.
+        mission.setImageCount((short) 0);
+        try {
+            missionJpaRepository.save(mission);
+        } catch (Exception e) {
+            LogUtil.printBasicWarnLog(LogHeader.DELETE_PROFILE_IMAGE, e.getMessage(), uuid);
+        }
+        return StatusCode.NO_ERROR;
     }
 }

@@ -22,7 +22,9 @@ public enum LogHeader {
     CREATE_MISSION,
     GET_MISSION,
     UPDATE_MISSION,
-    DELETE_MISSION;
+    DELETE_MISSION,
+    UPLOAD_MISSION_IMAGE,
+    DELETE_MISSION_IMAGE;
 
     @Getter
     private final String header;

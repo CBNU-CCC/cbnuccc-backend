@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,12 +12,15 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.cbnuccc.cbnuccc.Dto.MissionDto;
 import com.cbnuccc.cbnuccc.Service.MissionService;
 import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
+import com.cbnuccc.cbnuccc.Util.ImageUtil;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
@@ -106,5 +110,43 @@ public class MissionController {
             return code.makeErrorResponseEntityAndPrintLog(LogHeader.DELETE_MISSION, uuid);
 
         return ResponseEntity.ok(deletedMission);
+    }
+
+    // upload mission's images
+    @PostMapping("/mission-image/{id}")
+    public ResponseEntity<?> uploadMissionImage(Authentication authentication,
+            @RequestParam("files") List<MultipartFile> _files,
+            @PathVariable("id") int id) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+
+        // compress images
+        List<MultipartFile> files = new ArrayList<>();
+        for (MultipartFile file : _files) {
+            DataWithStatusCode<MultipartFile> data = ImageUtil.makeImageLowQuality(file);
+            if (data.code().checkIsError())
+                return data.code().makeErrorResponseEntityAndPrintLog(LogHeader.UPLOAD_MISSION_IMAGE, uuid);
+            files.add(data.data());
+        }
+
+        // check size of all files
+        long sumOfImageSizes = 0;
+        for (MultipartFile file : files)
+            sumOfImageSizes += file.getSize();
+        if (sumOfImageSizes > 1 * 1024 * 1024) // 1MB
+            return StatusCode.EXCEED_1MB.makeErrorResponseEntityAndPrintLog(LogHeader.UPLOAD_MISSION_IMAGE, uuid);
+
+        // save files
+        StatusCode code = missionService.uploadMissionImages(files, id, uuid);
+        if (code.checkIsError())
+            return code.makeErrorResponseEntityAndPrintLog(LogHeader.UPLOAD_MISSION_IMAGE, uuid);
+        return StatusCode.NO_ERROR.makeErrorResponseEntityAndPrintLog(LogHeader.UPLOAD_MISSION_IMAGE, uuid);
+    }
+
+    // delete all images of #{id} mission.
+    @DeleteMapping("/mission-image/{id}")
+    public ResponseEntity<?> deleteAllMissionImage(Authentication authentication, @PathVariable("id") int id) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        StatusCode code = missionService.deleteAllMissionImages(id, uuid);
+        return code.makeErrorResponseEntityAndPrintLog(LogHeader.DELETE_MISSION_IMAGE, uuid);
     }
 }
