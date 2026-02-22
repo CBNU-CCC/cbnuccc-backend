@@ -1,10 +1,12 @@
 package com.cbnuccc.cbnuccc.Util;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -27,6 +29,21 @@ public class SecurityUtil {
 
     @Getter
     private final String mailgunDomain;
+
+    // list of methods and uris which does not need to get filtered.
+    public static final List<ExcludePath> EXCLUDE_LIST = List.of(
+            new ExcludePath(HttpMethod.GET, "/email-duplication"),
+            new ExcludePath(HttpMethod.GET, "/user"),
+            new ExcludePath(HttpMethod.POST, "/user"),
+            new ExcludePath(HttpMethod.GET, "/user/*"),
+            new ExcludePath(HttpMethod.POST, "/login"),
+            new ExcludePath(HttpMethod.POST, "/verification"),
+            new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
+            new ExcludePath(HttpMethod.GET, "/profile-image/*"),
+            new ExcludePath(HttpMethod.GET, "/prayer"),
+            new ExcludePath(HttpMethod.GET, "/prayer/*"),
+            new ExcludePath(HttpMethod.GET, "/mission"),
+            new ExcludePath(HttpMethod.GET, "/mission/*"));
 
     public SecurityUtil(
             @Value("${pepper}") String pepper,

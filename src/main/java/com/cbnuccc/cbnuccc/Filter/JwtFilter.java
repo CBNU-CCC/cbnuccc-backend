@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.cbnuccc.cbnuccc.Util.ExcludePath;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
@@ -44,21 +43,6 @@ public class JwtFilter extends OncePerRequestFilter {
         return registration;
     }
 
-    // list of methods and uris which does not need to get filtered.
-    private static final List<ExcludePath> EXCLUDE_LIST = List.of(
-            new ExcludePath(HttpMethod.GET, "/email-duplication"),
-            new ExcludePath(HttpMethod.GET, "/user"),
-            new ExcludePath(HttpMethod.POST, "/user"),
-            new ExcludePath(HttpMethod.GET, "/user/*"),
-            new ExcludePath(HttpMethod.POST, "/login"),
-            new ExcludePath(HttpMethod.POST, "/verification"),
-            new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
-            new ExcludePath(HttpMethod.GET, "/profile-image/*"),
-            new ExcludePath(HttpMethod.GET, "/prayer"),
-            new ExcludePath(HttpMethod.GET, "/prayer/*"),
-            new ExcludePath(HttpMethod.GET, "/mission"),
-            new ExcludePath(HttpMethod.GET, "/mission/*"));
-
     // check for not filtering
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -70,7 +54,7 @@ public class JwtFilter extends OncePerRequestFilter {
         MDC.put("endpoint", requestUri);
         MDC.put("method", method);
 
-        boolean result = EXCLUDE_LIST.stream()
+        boolean result = SecurityUtil.EXCLUDE_LIST.stream()
                 .anyMatch(exclude -> exclude.method() == requestMethod &&
                         matcher.match(exclude.uriPattern(), requestUri));
         return result;
