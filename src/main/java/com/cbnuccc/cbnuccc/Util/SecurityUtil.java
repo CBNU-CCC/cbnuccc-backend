@@ -13,6 +13,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.Getter;
 
@@ -74,5 +75,22 @@ public class SecurityUtil {
         Claims claims = Jwts.parser().verifyWith(this.jwtKey).build()
                 .parseSignedClaims(token).getPayload();
         return claims;
+    }
+
+    public static String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null)
+            ip = request.getHeader("Proxy-Client-IP");
+        if (ip == null)
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        if (ip == null)
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        if (ip == null)
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        if (ip == null)
+            ip = request.getRemoteAddr();
+
+        return ip.split(",")[0];
     }
 }
