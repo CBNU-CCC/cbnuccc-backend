@@ -52,7 +52,7 @@ public class MissionController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeIdKV(id));
         return ResponseEntity.ok(result.data());
     }
 
@@ -62,7 +62,7 @@ public class MissionController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         List<MissionDto> missions = missionService.getAllMyMissions(uuid);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(missions.size()));
         return ResponseEntity.ok(missions);
     }
 
@@ -78,7 +78,7 @@ public class MissionController {
         }
 
         MissionDto createdMissionDto = result.data();
-        LogUtil.printBasicInfoLog(LogHeader.CREATE_MISSION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.CREATE_MISSION, LogUtil.makeIdKV(missionDto.getId()));
         return ResponseEntity.ok(createdMissionDto);
     }
 
@@ -93,7 +93,7 @@ public class MissionController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.UPDATE_MISSION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.UPDATE_MISSION, LogUtil.makeIdKV(id));
         return getSpecificMission(id);
     }
 
@@ -118,7 +118,7 @@ public class MissionController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.DELETE_MISSION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.DELETE_MISSION, LogUtil.makeIdKV(id));
         return ResponseEntity.ok(deletedMission);
     }
 
@@ -157,7 +157,10 @@ public class MissionController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.UPLOAD_MISSION_IMAGE, (Object[]) null);
+        LogUtil.printBasicInfoLog(
+                LogHeader.UPLOAD_MISSION_IMAGE,
+                LogUtil.makeIdKV(id),
+                LogUtil.makeCountKV(files.size()));
         return StatusCode.NO_ERROR.makeErrorResponseEntity();
     }
 
@@ -165,13 +168,27 @@ public class MissionController {
     @DeleteMapping("/mission-image/{id}")
     public ResponseEntity<?> deleteAllMissionImage(Authentication authentication, @PathVariable("id") int id) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        StatusCode code = missionService.deleteAllMissionImages(id, uuid);
+
+        // get information which being deleted
+        DataWithStatusCode<MissionDto> _mission = missionService.getSpecificMission(id);
+        StatusCode code = _mission.code();
+        if (code.checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION_IMAGE, LogUtil.makeStatusCodeMessageKV(code));
+            return code.makeErrorResponseEntity();
+        }
+        short originalImageCount = _mission.data().getImageCount();
+
+        // delete all images
+        code = missionService.deleteAllMissionImages(id, uuid);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION_IMAGE, LogUtil.makeStatusCodeMessageKV(code));
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.DELETE_MISSION_IMAGE, (Object[]) null);
+        LogUtil.printBasicInfoLog(
+                LogHeader.DELETE_MISSION_IMAGE,
+                LogUtil.makeIdKV(id),
+                LogUtil.makeCountKV(originalImageCount));
         return code.makeErrorResponseEntity();
     }
 }

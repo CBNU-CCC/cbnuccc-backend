@@ -59,7 +59,7 @@ public class UserController {
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_USER, "successfully got a user", uuid);
+        LogUtil.printBasicInfoLog(LogHeader.GET_USER, LogUtil.makeCountKV(resultBody.size()));
         LimitedUserDto result = resultBody.get(0);
         return ResponseEntity.ok(result);
     }
@@ -70,12 +70,12 @@ public class UserController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _me = userService.findUserDtoByUuid(uuid);
         if (_me.isEmpty()) {
-            LogUtil.printBasicWarnLog(LogHeader.GET_USER, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
+            LogUtil.printBasicWarnLog(LogHeader.GET_ME, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
         }
         UserDto me = _me.get();
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_USER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_ME, (Object[]) null);
         return ResponseEntity.ok(me);
     }
 
@@ -96,7 +96,7 @@ public class UserController {
             return StatusCode.DUPLICATED_EMAIL.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.CHECK_EMAIL_DUPLICATION, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.CHECK_EMAIL_DUPLICATION, LogUtil.makeEmailKV(email));
         return StatusCode.NOT_DUPLICATED_EMAIL.makeErrorResponseEntity();
     }
 
@@ -110,7 +110,7 @@ public class UserController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.CREATE_USER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.CREATE_USER, LogUtil.makeUuidStringKV(result.data().getUuid()));
         return ResponseEntity.ok(result.data());
     }
 
@@ -124,7 +124,7 @@ public class UserController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.UPDATE_USER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.UPDATE_USER, LogUtil.makeUuidStringKV(uuid));
         return getMyUserData(authentication);
     }
 
@@ -141,7 +141,7 @@ public class UserController {
         }
 
         UserDto deletedUser = (UserDto) _deletedUser.getBody();
-        LogUtil.printBasicInfoLog(LogHeader.DELETE_USER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.DELETE_USER, LogUtil.makeUuidStringKV(uuid));
         return ResponseEntity.ok(deletedUser);
     }
 

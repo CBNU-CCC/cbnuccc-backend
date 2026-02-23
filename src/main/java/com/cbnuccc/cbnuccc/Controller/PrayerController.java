@@ -34,7 +34,7 @@ public class PrayerController {
     public ResponseEntity<?> getPrayers() {
         List<PrayerDto> result = prayerService.getAllNotAnonymousPrayers();
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.size()));
         return ResponseEntity.ok(result);
     }
 
@@ -48,7 +48,7 @@ public class PrayerController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeIdKV(id));
         return ResponseEntity.ok(result.data());
     }
 
@@ -58,7 +58,7 @@ public class PrayerController {
         UUID uuid = userService.getUuidFromAuth(authentication);
         List<PrayerDto> result = prayerService.getAllPrayersByUuid(uuid);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, (Object) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.size()));
         return ResponseEntity.ok(result);
     }
 
@@ -73,7 +73,7 @@ public class PrayerController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeIdKV(id));
         return ResponseEntity.ok(result.data());
     }
 
@@ -88,7 +88,7 @@ public class PrayerController {
             code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.CREATE_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.CREATE_PRAYER, LogUtil.makeIdKV(result.data().getId()));
         return ResponseEntity.ok(result.data());
     }
 
@@ -105,7 +105,7 @@ public class PrayerController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.UPDATE_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.UPDATE_PRAYER, LogUtil.makeIdKV(id));
         return getMyPrayerById(authentication, id);
     }
 
@@ -133,7 +133,7 @@ public class PrayerController {
             return result.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.DELETE_PRAYER, (Object[]) null);
+        LogUtil.printBasicInfoLog(LogHeader.DELETE_PRAYER, LogUtil.makeIdKV(id));
         return ResponseEntity.ok(deletedPrayer);
     }
 }
