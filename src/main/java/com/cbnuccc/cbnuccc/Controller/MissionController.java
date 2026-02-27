@@ -78,7 +78,7 @@ public class MissionController {
         }
 
         MissionDto createdMissionDto = result.data();
-        LogUtil.printBasicInfoLog(LogHeader.CREATE_MISSION, LogUtil.makeIdKV(missionDto.getId()));
+        LogUtil.printBasicInfoLog(LogHeader.CREATE_MISSION, LogUtil.makeIdKV(result.data().getId()));
         return ResponseEntity.ok(createdMissionDto);
     }
 
