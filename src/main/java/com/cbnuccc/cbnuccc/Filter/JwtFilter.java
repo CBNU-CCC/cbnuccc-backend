@@ -90,7 +90,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // print a entering log
         MDC.put("entered_user_uuid", claim.get("uuid").toString().substring(0, 8));
-        MDC.put("ip", SecurityUtil.getClientIp(request));
+        // MDC.put("ip", SecurityUtil.getClientIp(request));
         LogUtil.printBasicInfoLog(LogHeader.ENTER, (Object[]) null);
 
         // final setting to login.
