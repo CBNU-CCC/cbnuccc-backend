@@ -21,6 +21,7 @@ import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.PaginationUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class PrayerController {
         Page<PrayerDto> result = prayerService.getAllNotAnonymousPrayers(pageable);
 
         LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.getSize()));
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
     // get a specific prayer.
@@ -61,7 +62,7 @@ public class PrayerController {
         Page<PrayerDto> result = prayerService.getAllPrayersByUuid(uuid, pageable);
 
         LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.getSize()));
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
     // get all my prayers.

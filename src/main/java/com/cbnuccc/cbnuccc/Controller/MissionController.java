@@ -26,6 +26,7 @@ import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.ImageUtil;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.PaginationUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class MissionController {
         Page<MissionDto> result = missionService.getAllMissions(pageable);
 
         LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(result.getSize()));
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
     // get a specific mission.
@@ -66,7 +67,7 @@ public class MissionController {
         Page<MissionDto> missions = missionService.getAllMyMissions(uuid, pageable);
 
         LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(missions.getSize()));
-        return ResponseEntity.ok(missions);
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(missions));
     }
 
     // create a mission.
