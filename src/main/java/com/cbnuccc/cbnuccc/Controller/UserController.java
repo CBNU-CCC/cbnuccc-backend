@@ -1,11 +1,12 @@
 package com.cbnuccc.cbnuccc.Controller;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,6 +27,7 @@ import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.PaginationUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 @RestController
@@ -41,10 +43,10 @@ public class UserController {
 
     // get users
     @GetMapping("/user")
-    public ResponseEntity<List<LimitedUserDto>> getUser(@ModelAttribute LimitedUserDto userDto) {
-        List<LimitedUserDto> dtos = userService.findAllLimitedUserDtosByLimitedUserDto(userDto);
-        LogUtil.printBasicInfoLog(LogHeader.GET_USER, LogUtil.makeCountKV(dtos.size()));
-        return ResponseEntity.ok(dtos);
+    public ResponseEntity<Object> getUser(@ModelAttribute LimitedUserDto userDto, Pageable pageable) {
+        Page<LimitedUserDto> dtos = userService.findAllLimitedUserDtosByLimitedUserDto(userDto, pageable);
+        LogUtil.printBasicInfoLog(LogHeader.GET_USER, LogUtil.makeCountKV(dtos.getSize()));
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(dtos));
     }
 
     // get a user by uuid
@@ -53,14 +55,14 @@ public class UserController {
         LimitedUserDto user = new LimitedUserDto();
         user.setUuid(uuid);
 
-        List<LimitedUserDto> resultBody = (List<LimitedUserDto>) getUser(user).getBody();
-        if (resultBody.size() == 0) {
+        Page<LimitedUserDto> resultBody = userService.findAllLimitedUserDtosByLimitedUserDto(user, Pageable.ofSize(1));
+        if (resultBody.getSize() == 0) {
             LogUtil.printBasicWarnLog(LogHeader.GET_USER, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_USER, LogUtil.makeCountKV(resultBody.size()));
-        LimitedUserDto result = resultBody.get(0);
+        LogUtil.printBasicInfoLog(LogHeader.GET_USER, LogUtil.makeCountKV(resultBody.getSize()));
+        LimitedUserDto result = resultBody.toList().get(0);
         return ResponseEntity.ok(result);
     }
 
@@ -111,7 +113,7 @@ public class UserController {
         }
 
         LogUtil.printBasicInfoLog(LogHeader.CREATE_USER, LogUtil.makeUuidStringKV(result.data().getUuid()));
-        return ResponseEntity.ok(result.data());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 
     // update user by uuid

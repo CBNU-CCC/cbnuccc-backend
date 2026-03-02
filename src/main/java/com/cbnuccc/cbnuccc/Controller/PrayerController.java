@@ -1,8 +1,10 @@
 package com.cbnuccc.cbnuccc.Controller;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,10 +33,10 @@ public class PrayerController {
 
     // get all prayers but not anonymous ones.
     @GetMapping("/prayer")
-    public ResponseEntity<?> getPrayers() {
-        List<PrayerDto> result = prayerService.getAllNotAnonymousPrayers();
+    public ResponseEntity<?> getPrayers(Pageable pageable) {
+        Page<PrayerDto> result = prayerService.getAllNotAnonymousPrayers(pageable);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.size()));
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.getSize()));
         return ResponseEntity.ok(result);
     }
 
@@ -54,11 +56,11 @@ public class PrayerController {
 
     // get all my prayers.
     @GetMapping("/my-prayer")
-    public ResponseEntity<?> getMyPrayers(Authentication authentication) {
+    public ResponseEntity<?> getMyPrayers(Authentication authentication, Pageable pageable) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        List<PrayerDto> result = prayerService.getAllPrayersByUuid(uuid);
+        Page<PrayerDto> result = prayerService.getAllPrayersByUuid(uuid, pageable);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.size()));
+        LogUtil.printBasicInfoLog(LogHeader.GET_PRAYER, LogUtil.makeCountKV(result.getSize()));
         return ResponseEntity.ok(result);
     }
 
@@ -89,7 +91,7 @@ public class PrayerController {
         }
 
         LogUtil.printBasicInfoLog(LogHeader.CREATE_PRAYER, LogUtil.makeIdKV(result.data().getId()));
-        return ResponseEntity.ok(result.data());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 
     // update a prayer

@@ -2,11 +2,12 @@ package com.cbnuccc.cbnuccc.Service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,12 +63,9 @@ public class MissionService {
     }
 
     // get all missions
-    public List<MissionDto> getAllMissions() {
-        List<Mission> missions = missionJpaRepository.findAll();
-        List<MissionDto> result = new ArrayList<>();
-        for (Mission mission : missions)
-            result.add(missionToMissionDto(mission));
-        return result;
+    public Page<MissionDto> getAllMissions(Pageable pageable) {
+        Page<Mission> missions = missionJpaRepository.findAll(pageable);
+        return missions.map(mission -> missionToMissionDto(mission));
     }
 
     // get a specific mission.
@@ -80,12 +78,9 @@ public class MissionService {
     }
 
     // get all my missions
-    public List<MissionDto> getAllMyMissions(UUID uuid) {
-        List<Mission> missions = missionJpaRepository.findAllByAuthorUuid(uuid);
-        List<MissionDto> result = new ArrayList<>();
-        for (Mission mission : missions)
-            result.add(missionToMissionDto(mission));
-        return result;
+    public Page<MissionDto> getAllMyMissions(UUID uuid, Pageable pageable) {
+        Page<Mission> missions = missionJpaRepository.findAllByAuthorUuid(uuid, pageable);
+        return missions.map(mission -> missionToMissionDto(mission));
     }
 
     // create a mission

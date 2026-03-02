@@ -1,9 +1,10 @@
 package com.cbnuccc.cbnuccc.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import com.cbnuccc.cbnuccc.Model.Mission;
 
 public interface MissionJpaRepository extends JpaRepository<Mission, Integer> {
     // find all missions by given uuid.
-    List<Mission> findAllByAuthorUuid(UUID uuid);
+    Page<Mission> findAllByAuthorUuid(UUID uuid, Pageable pageable);
 
     Optional<Mission> findByIdAndAuthorUuid(int id, UUID uuid);
 

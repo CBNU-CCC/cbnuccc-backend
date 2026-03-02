@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,10 +38,10 @@ public class MissionController {
 
     // get all missions.
     @GetMapping("/mission")
-    public ResponseEntity<?> getMission() {
-        List<MissionDto> result = missionService.getAllMissions();
+    public ResponseEntity<?> getMission(Pageable pageable) {
+        Page<MissionDto> result = missionService.getAllMissions(pageable);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(result.size()));
+        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(result.getSize()));
         return ResponseEntity.ok(result);
     }
 
@@ -58,11 +61,11 @@ public class MissionController {
 
     // get my missions.
     @GetMapping("/my-mission")
-    public ResponseEntity<?> getMyMissions(Authentication authentication) {
+    public ResponseEntity<?> getMyMissions(Authentication authentication, Pageable pageable) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        List<MissionDto> missions = missionService.getAllMyMissions(uuid);
+        Page<MissionDto> missions = missionService.getAllMyMissions(uuid, pageable);
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(missions.size()));
+        LogUtil.printBasicInfoLog(LogHeader.GET_MISSION, LogUtil.makeCountKV(missions.getSize()));
         return ResponseEntity.ok(missions);
     }
 
@@ -79,7 +82,7 @@ public class MissionController {
 
         MissionDto createdMissionDto = result.data();
         LogUtil.printBasicInfoLog(LogHeader.CREATE_MISSION, LogUtil.makeIdKV(result.data().getId()));
-        return ResponseEntity.ok(createdMissionDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdMissionDto);
     }
 
     // update given mission.

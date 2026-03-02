@@ -1,11 +1,11 @@
 package com.cbnuccc.cbnuccc.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -136,18 +136,12 @@ public class UserService {
     }
 
     // find all of users that are matched with given UserDto.
-    public List<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser) {
+    public Page<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser, Pageable pageable) {
         // make LimitedUserDto to User
         MyUser example = userDtoToUser(limitedUserDtoToUserDto(exampleUser));
-        List<MyUser> users = userJpaRepository.findAll(Example.of(example));
+        Page<MyUser> users = userJpaRepository.findAll(Example.of(example), pageable);
 
-        List<LimitedUserDto> ret = new ArrayList<LimitedUserDto>();
-        for (MyUser user : users) {
-            LimitedUserDto userDto = userDtoToLimitedUserDto(userToUserDto(user));
-            ret.add(userDto);
-        }
-
-        return ret;
+        return users.map(user -> userDtoToLimitedUserDto(userToUserDto(user)));
     }
 
     // get uuid from given jwt token.

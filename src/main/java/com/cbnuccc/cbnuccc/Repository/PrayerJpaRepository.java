@@ -1,9 +1,10 @@
 package com.cbnuccc.cbnuccc.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,10 +13,10 @@ import com.cbnuccc.cbnuccc.Model.Prayer;
 
 public interface PrayerJpaRepository extends JpaRepository<Prayer, Integer> {
     // get not anonymous prayers.
-    List<Prayer> findAllByAnonymousFalse();
+    Page<Prayer> findAllByAnonymousFalse(Pageable pageable);
 
     // get all prayers of specific user.
-    List<Prayer> findAllByAuthorUuid(UUID uuid);
+    Page<Prayer> findAllByAuthorUuid(UUID uuid, Pageable pageable);
 
     // get a specific prayer but not anonymous.
     Optional<Prayer> findByIdAndAnonymousFalse(Integer id);

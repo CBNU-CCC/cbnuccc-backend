@@ -2,11 +2,11 @@ package com.cbnuccc.cbnuccc.Service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.cbnuccc.cbnuccc.Dto.PrayerDto;
@@ -39,13 +39,10 @@ public class PrayerService {
     }
 
     // get all prayers except anonymous ones.
-    public List<PrayerDto> getAllNotAnonymousPrayers() {
+    public Page<PrayerDto> getAllNotAnonymousPrayers(Pageable pageable) {
         // get all opened prayers.
-        List<Prayer> prayers = prayerJpaRepository.findAllByAnonymousFalse();
-        List<PrayerDto> result = new ArrayList<PrayerDto>();
-        for (Prayer prayer : prayers)
-            result.add(prayerToPrayerDto(prayer));
-        return result;
+        Page<Prayer> prayers = prayerJpaRepository.findAllByAnonymousFalse(pageable);
+        return prayers.map(prayer -> prayerToPrayerDto(prayer));
     }
 
     // get a specific prayer except anonymous one.
@@ -59,12 +56,9 @@ public class PrayerService {
     }
 
     // get all prayers of specific user.
-    public List<PrayerDto> getAllPrayersByUuid(UUID uuid) {
-        List<Prayer> prayers = prayerJpaRepository.findAllByAuthorUuid(uuid);
-        List<PrayerDto> result = new ArrayList<PrayerDto>();
-        for (Prayer prayer : prayers)
-            result.add(prayerToPrayerDto(prayer));
-        return result;
+    public Page<PrayerDto> getAllPrayersByUuid(UUID uuid, Pageable pageable) {
+        Page<Prayer> prayers = prayerJpaRepository.findAllByAuthorUuid(uuid, pageable);
+        return prayers.map(prayer -> prayerToPrayerDto(prayer));
     }
 
     // get a specific prayer
