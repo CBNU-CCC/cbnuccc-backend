@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,7 +42,10 @@ public class UserController {
 
     // get users
     @GetMapping("/user")
-    public ResponseEntity<Object> getUser(@ModelAttribute LimitedUserDto userDto, Pageable pageable) {
+    public ResponseEntity<Object> getUser(@RequestBody(required = false) LimitedUserDto userDto, Pageable pageable) {
+        if (userDto == null)
+            userDto = new LimitedUserDto();
+
         Page<LimitedUserDto> dtos = userService.findAllLimitedUserDtosByLimitedUserDto(userDto, pageable);
         LogUtil.printBasicInfoLog(LogHeader.GET_USER,
                 LogUtil.makeCountKV(dtos.getNumberOfElements()),

@@ -34,17 +34,10 @@ public class SecurityUtil {
     // list of methods and uris which does not need to get filtered.
     public static final List<ExcludePath> EXCLUDE_LIST = List.of(
             new ExcludePath(HttpMethod.GET, "/email-duplication"),
-            new ExcludePath(HttpMethod.GET, "/user"),
             new ExcludePath(HttpMethod.POST, "/user"),
-            new ExcludePath(HttpMethod.GET, "/user/*"),
             new ExcludePath(HttpMethod.POST, "/login"),
             new ExcludePath(HttpMethod.POST, "/verification"),
-            new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
-            new ExcludePath(HttpMethod.GET, "/profile-image/*"),
-            new ExcludePath(HttpMethod.GET, "/prayer"),
-            new ExcludePath(HttpMethod.GET, "/prayer/*"),
-            new ExcludePath(HttpMethod.GET, "/mission"),
-            new ExcludePath(HttpMethod.GET, "/mission/*"));
+            new ExcludePath(HttpMethod.POST, "/verification/confirmation"));
 
     public SecurityUtil(
             @Value("${pepper}") String pepper,
