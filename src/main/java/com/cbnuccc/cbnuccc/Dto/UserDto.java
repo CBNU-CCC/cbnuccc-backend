@@ -1,6 +1,5 @@
 package com.cbnuccc.cbnuccc.Dto;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -20,8 +19,6 @@ public class UserDto {
     private String name;
 
     private Short grade;
-
-    private LocalDate birthDate;
 
     public UserDto() {
     }

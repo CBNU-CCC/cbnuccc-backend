@@ -1,6 +1,5 @@
 package com.cbnuccc.cbnuccc.Model;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 import jakarta.persistence.Entity;
@@ -42,8 +41,4 @@ public class MyUser {
     private Short grade;
 
     private String studentId;
-
-    // UserDto
-    // TODO: delete birthDate
-    private LocalDate birthDate;
 }

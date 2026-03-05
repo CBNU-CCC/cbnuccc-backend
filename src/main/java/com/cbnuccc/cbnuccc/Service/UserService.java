@@ -47,8 +47,7 @@ public class UserService {
                 user.getRank(),
                 user.getSex(),
                 user.getName(),
-                user.getGrade(),
-                user.getBirthDate());
+                user.getGrade());
     }
 
     // make UserDto to User.
@@ -60,7 +59,6 @@ public class UserService {
         user.setSex(userDto.getSex());
         user.setName(userDto.getName());
         user.setGrade(userDto.getGrade());
-        user.setBirthDate(userDto.getBirthDate());
         return user;
     }
 
@@ -205,8 +203,6 @@ public class UserService {
             oldUser.setName(user.getName());
         if (user.getGrade() != null)
             oldUser.setGrade(user.getGrade());
-        if (user.getBirthDate() != null)
-            oldUser.setBirthDate(user.getBirthDate());
 
         userJpaRepository.save(oldUser);
         return StatusCode.NO_ERROR;
