@@ -32,4 +32,7 @@ public interface PrayerJpaRepository extends JpaRepository<Prayer, Integer> {
                 where p.id = :prayerId
             """)
     Optional<UUID> findAuthorUuidByPrayerId(@Param("prayerId") Integer prayerId);
+
+    // get prayer count by uuid
+    int countByAuthorUuid(UUID uuid);
 }

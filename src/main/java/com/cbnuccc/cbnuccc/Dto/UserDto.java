@@ -20,6 +20,9 @@ public class UserDto {
 
     private Short grade;
 
+    // It's not on the DB.
+    private Integer prayerCount = 0;
+
     public UserDto() {
     }
 }

@@ -18,6 +18,7 @@ import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Verification;
+import com.cbnuccc.cbnuccc.Repository.PrayerJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     private final UserJpaRepository userJpaRepository;
     private final VerificationJpaRepository verificationJpaRepository;
+    private final PrayerJpaRepository prayerJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
     private final WebClient webClient;
@@ -47,7 +49,8 @@ public class UserService {
                 user.getRank(),
                 user.getSex(),
                 user.getName(),
-                user.getGrade());
+                user.getGrade(),
+                prayerJpaRepository.countByAuthorUuid(user.getUuid()));
     }
 
     // make UserDto to User.
@@ -68,7 +71,8 @@ public class UserService {
                 userDto.getUuid(),
                 userDto.getRank(),
                 userDto.getName(),
-                userDto.getGrade());
+                userDto.getGrade(),
+                userDto.getPrayerCount());
         return dto;
     }
 
