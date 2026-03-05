@@ -3,6 +3,7 @@
 
 ## 📃 Mainly Used Frameworks, Libraries or Services
 * **Spring Boot 4**
+* **Spring Security**
 * **lombok**
 * **slf4j**
 * **Supabase**<br>데이터베이스
