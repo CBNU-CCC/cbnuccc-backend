@@ -60,6 +60,7 @@ public class SecurityUtil {
         return claims;
     }
 
+    // get client ip.
     public static String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
 
