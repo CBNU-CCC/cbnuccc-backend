@@ -83,7 +83,9 @@ public class LoginService {
         // after the last login time, then make the email and ip locked.
         if (attempt >= 5) {
             if (loginRecord.getLastLoginAt().isBefore(OffsetDateTimeUtil.getNow().minusMinutes(10))) {
-                attempt = 0;
+                // this function runs when login fails.
+                // clear attempts to 1.
+                attempt = 1;
             }
         }
 
@@ -109,6 +111,17 @@ public class LoginService {
         // check the email and the ip
         if (!checkLoginable(email, ip))
             return null;
+
+        // find a login record by email and ip to delete it.
+        Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email, ip);
+        if (_loginRecord.isPresent()) {
+            try {
+                loginJpaRepository.delete(_loginRecord.get());
+            } catch (Exception e) {
+                LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeExceptionKV(e));
+                return null;
+            }
+        }
 
         // create user's token
         String pepperedPassword = securityUtil.addPepper(password);
