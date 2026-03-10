@@ -1,7 +1,5 @@
 package com.cbnuccc.cbnuccc.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +15,7 @@ import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.OffsetDateTimeUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import lombok.RequiredArgsConstructor;
@@ -80,7 +79,7 @@ public class PrayerService {
 
         // set prayer data
         Prayer prayer = new Prayer();
-        prayer.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        prayer.setCreatedAt(OffsetDateTimeUtil.getNow());
         prayer.setRequest(prayerDto.getRequest());
         prayer.setAnonymous(prayerDto.getAnonymous());
         prayer.setAuthor(author);
@@ -103,7 +102,7 @@ public class PrayerService {
         Prayer prayer = _prayer.get();
 
         // update by fiven data.
-        prayer.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        prayer.setCreatedAt(OffsetDateTimeUtil.getNow());
         if (prayerDto.getRequest() != null)
             prayer.setRequest(prayerDto.getRequest());
         if (prayerDto.getAnonymous() != null)

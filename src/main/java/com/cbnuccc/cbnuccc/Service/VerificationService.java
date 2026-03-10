@@ -1,7 +1,5 @@
 package com.cbnuccc.cbnuccc.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -14,6 +12,7 @@ import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.OffsetDateTimeUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
@@ -43,7 +42,7 @@ public class VerificationService {
             return true;
 
         Verification verification = _verification.get();
-        if (verification.getExpireAt().isBefore(OffsetDateTime.now(ZoneId.of("Asia/Seoul"))))
+        if (verification.getExpireAt().isBefore(OffsetDateTimeUtil.getNow()))
             return true; // expired
 
         return false;
@@ -54,7 +53,7 @@ public class VerificationService {
     @Scheduled(fixedRate = 1000 * 60)
     @Transactional
     public void deleteAllExpiredEmails() {
-        verificationJpaRepository.deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        verificationJpaRepository.deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTimeUtil.getNow());
     }
 
     // make 6-digit code
@@ -108,7 +107,7 @@ public class VerificationService {
                 verification = _verification.get();
             }
 
-            verification.setExpireAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")).plusMinutes(5));
+            verification.setExpireAt(OffsetDateTimeUtil.getNow().plusMinutes(5));
             verification.setCode(passwordEncoder.encode(securityUtil.addPepper(code)));
             verification.setIsVerified(false);
 

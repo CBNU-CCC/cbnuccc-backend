@@ -1,7 +1,5 @@
 package com.cbnuccc.cbnuccc.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +20,7 @@ import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.OffsetDateTimeUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import lombok.RequiredArgsConstructor;
@@ -94,7 +93,7 @@ public class MissionService {
         // create a mission instance
         Mission mission = new Mission();
         mission.setAuthor(user);
-        mission.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        mission.setCreatedAt(OffsetDateTimeUtil.getNow());
         mission.setSite(missionDto.getSite());
         mission.setStartTerm(missionDto.getStartTerm());
         mission.setEndTerm(missionDto.getEndTerm());
@@ -121,7 +120,7 @@ public class MissionService {
         Mission mission = _mission.get();
 
         // update mission.
-        missionDto.setCreatedAt(OffsetDateTime.now(ZoneId.of("Asia/Seoul")));
+        missionDto.setCreatedAt(OffsetDateTimeUtil.getNow());
         if (missionDto.getSite() != null)
             mission.setSite(missionDto.getSite());
         if (missionDto.getStartTerm() != null)
