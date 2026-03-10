@@ -18,7 +18,7 @@ public class MyUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter(value = AccessLevel.NONE)
-    private Integer id;
+    private Long id;
 
     // UserDto
     private UUID uuid;

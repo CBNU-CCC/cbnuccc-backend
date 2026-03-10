@@ -30,7 +30,7 @@ public class LogUtil {
         return kv("count", count);
     }
 
-    public static StructuredArgument makeIdKV(int id) {
+    public static StructuredArgument makeIdKV(long id) {
         return kv("id", id);
     }
 

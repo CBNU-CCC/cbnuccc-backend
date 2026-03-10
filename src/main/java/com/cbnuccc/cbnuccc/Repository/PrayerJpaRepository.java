@@ -31,7 +31,7 @@ public interface PrayerJpaRepository extends JpaRepository<Prayer, Integer> {
                 join p.author u
                 where p.id = :prayerId
             """)
-    Optional<UUID> findAuthorUuidByPrayerId(@Param("prayerId") Integer prayerId);
+    Optional<UUID> findAuthorUuidByPrayerId(@Param("prayerId") Long prayerId);
 
     // get prayer count by uuid
     int countByAuthorUuid(UUID uuid);

@@ -18,7 +18,7 @@ public class Verification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter(value = AccessLevel.NONE)
-    private Integer id;
+    private Long id;
 
     private String email;
 

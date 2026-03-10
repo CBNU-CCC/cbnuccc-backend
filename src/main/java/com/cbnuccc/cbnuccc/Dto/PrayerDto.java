@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PrayerDto {
-    private Integer id;
+    private Long id;
 
     // this field is not on the DB.
     private UUID authorUuid;

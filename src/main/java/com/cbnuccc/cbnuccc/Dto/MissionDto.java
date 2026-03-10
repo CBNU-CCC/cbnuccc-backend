@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class MissionDto {
-    private Integer id;
+    private Long id;
 
     // this field is not on the DB.
     private UUID authorUuid;

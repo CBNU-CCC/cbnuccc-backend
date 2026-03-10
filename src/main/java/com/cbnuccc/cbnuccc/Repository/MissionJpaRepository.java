@@ -24,7 +24,7 @@ public interface MissionJpaRepository extends JpaRepository<Mission, Integer> {
                 join m.author u
                 where m.id = :missionId
             """)
-    Optional<UUID> findAuthorUuidByMissionId(@Param("missionId") Integer missionId);
+    Optional<UUID> findAuthorUuidByMissionId(@Param("missionId") Long missionId);
 
     // get mission count by uuid
     int countByAuthorUuid(UUID uuid);
