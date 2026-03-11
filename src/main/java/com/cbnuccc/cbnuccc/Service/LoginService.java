@@ -100,6 +100,7 @@ public class LoginService {
         // if attempt is (over) 5 and current time is not more 10 minutes
         // after the last login time, then make the email and ip locked.
         if (attempt >= 5) {
+            attempt = 5;
             if (loginRecord.getLastLoginAt().isBefore(OffsetDateTimeUtil.getNow().minusMinutes(10))) {
                 // this function runs when login fails.
                 // clear attempts to 1.
@@ -130,17 +131,6 @@ public class LoginService {
         if (!checkLoginable(email, ip))
             return null;
 
-        // find a login record by email and ip to delete it.
-        Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email, ip);
-        if (_loginRecord.isPresent()) {
-            try {
-                loginJpaRepository.delete(_loginRecord.get());
-            } catch (Exception e) {
-                LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeExceptionKV(e));
-                return null;
-            }
-        }
-
         // create user's token
         String pepperedPassword = securityUtil.addPepper(password);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -153,6 +143,18 @@ public class LoginService {
             LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeEmailKV(email), LogUtil.makeExceptionKV(e));
             return null;
         }
+
+        // find a login record by email and ip to delete it.
+        Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email, ip);
+        if (_loginRecord.isPresent()) {
+            try {
+                loginJpaRepository.delete(_loginRecord.get());
+            } catch (Exception e) {
+                LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeExceptionKV(e));
+                return null;
+            }
+        }
+
         String token = createToken(auth, email, rememberMe);
         TokenDto tokenDto = new TokenDto(token);
 
