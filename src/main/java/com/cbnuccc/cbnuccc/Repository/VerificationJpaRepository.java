@@ -10,7 +10,7 @@ import com.cbnuccc.cbnuccc.Model.Verification;
 public interface VerificationJpaRepository extends JpaRepository<Verification, Long> {
     Optional<Verification> findByEmail(String email);
 
-    void deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTime time);
+    Long deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTime time);
 
     void deleteByEmail(String email);
 }

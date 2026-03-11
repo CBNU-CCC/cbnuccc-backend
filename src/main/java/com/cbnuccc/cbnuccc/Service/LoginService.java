@@ -60,7 +60,12 @@ public class LoginService {
     @Scheduled(fixedRate = 1000 * 60 * 10)
     @Transactional
     public void deleteAllUselessTupleByLastLoginAt() {
-        loginJpaRepository.deleteByLastLoginAtBefore(OffsetDateTimeUtil.getNow().minusMinutes(10));
+        long countDeletedRows = loginJpaRepository
+                .deleteByLastLoginAtBefore(OffsetDateTimeUtil.getNow().minusMinutes(10));
+
+        if (countDeletedRows != 0)
+            LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_USELESS_LOGIN_RECORD,
+                    LogUtil.makeCountKV((int) countDeletedRows));
     }
 
     // check login-able

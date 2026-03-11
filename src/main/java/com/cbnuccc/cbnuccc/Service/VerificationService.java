@@ -53,7 +53,12 @@ public class VerificationService {
     @Scheduled(fixedRate = 1000 * 60)
     @Transactional
     public void deleteAllExpiredEmails() {
-        verificationJpaRepository.deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTimeUtil.getNow());
+        long countDeletedRows = verificationJpaRepository
+                .deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTimeUtil.getNow());
+
+        if (countDeletedRows != 0)
+            LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_VERIFICATION_RECORD,
+                    LogUtil.makeCountKV((int) countDeletedRows));
     }
 
     // make 6-digit code

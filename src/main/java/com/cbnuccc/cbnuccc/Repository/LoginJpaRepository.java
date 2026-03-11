@@ -12,5 +12,5 @@ public interface LoginJpaRepository extends JpaRepository<Login, Long> {
     Optional<Login> findByEmailAndIp(String email, String ip);
 
     // delete all tuples that the last_login_at is 10 minutes before now.
-    void deleteByLastLoginAtBefore(OffsetDateTime time);
+    Long deleteByLastLoginAtBefore(OffsetDateTime time);
 }
