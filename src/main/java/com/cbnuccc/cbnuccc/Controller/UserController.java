@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.OldAndNewPasswordDto;
+import com.cbnuccc.cbnuccc.Dto.ResetPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Service.UserService;
@@ -149,6 +150,18 @@ public class UserController {
 
         LogUtil.printBasicInfoLog(LogHeader.UPDATE_USER_PASSWORD, LogUtil.makeUuidStringKV(uuid));
         return getMyUserData(authentication);
+    }
+
+    @PatchMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+        StatusCode code = userService.resetPassword(resetPasswordDto);
+        if (code.checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.RESET_PASSWORD, LogUtil.makeEmailKV(resetPasswordDto.getEmail()));
+            return code.makeErrorResponseEntity();
+        }
+
+        LogUtil.printBasicInfoLog(LogHeader.RESET_PASSWORD, LogUtil.makeEmailKV(resetPasswordDto.getEmail()));
+        return code.makeErrorResponseEntity();
     }
 
     // delete a user by uuid

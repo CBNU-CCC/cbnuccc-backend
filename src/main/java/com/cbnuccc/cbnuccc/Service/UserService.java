@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,10 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.cbnuccc.cbnuccc.Config.MailgunProperties;
 import com.cbnuccc.cbnuccc.Config.SecurityConfig;
 import com.cbnuccc.cbnuccc.Config.SupabaseProperties;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.OldAndNewPasswordDto;
+import com.cbnuccc.cbnuccc.Dto.ResetPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Verification;
@@ -29,6 +32,10 @@ import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,6 +51,7 @@ public class UserService {
     private final WebClient webClient;
     private final SupabaseProperties supabaseProperties;
     private final SecurityConfig securityConfig;
+    private final MailgunProperties mailgunProperties;
 
     // make User to UserDto.
     private UserDto userToUserDto(MyUser user) {
@@ -238,6 +246,86 @@ public class UserService {
         // change the password
         user = encodeUserPassword(user, passwords.getNewPassword());
         userJpaRepository.save(user);
+        return StatusCode.NO_ERROR;
+    }
+
+    // send a email to reset password
+    public StatusCode resetPassword(ResetPasswordDto resetPasswordDto) {
+        // make example
+        MyUser example = new MyUser();
+        example.setEmail(resetPasswordDto.getEmail());
+        example.setName(resetPasswordDto.getName());
+        example.setStudentId(resetPasswordDto.getStudentId());
+
+        // find matched user
+        List<MyUser> _user = userJpaRepository.findAll(Example.of(example));
+        if (_user.isEmpty() || _user.size() > 1)
+            return StatusCode.NO_USER_FOUND;
+        MyUser user = _user.get(0);
+
+        // make new password
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String specials = "!@#$%^&*()-_=+[]{};:,.<>?";
+
+        StringBuilder password = new StringBuilder();
+
+        // Add 4 random alphabets (upper/lower)
+        for (int i = 0; i < 4; i++) {
+            char c = (Math.random() < 0.5 ? upper : lower).charAt((int) (Math.random() * 26));
+            password.append(c);
+        }
+
+        // Add 5 random digits
+        for (int i = 0; i < 5; i++) {
+            password.append(digits.charAt((int) (Math.random() * digits.length())));
+        }
+
+        // Add 2 random special characters
+        for (int i = 0; i < 2; i++) {
+            password.append(specials.charAt((int) (Math.random() * specials.length())));
+        }
+
+        // Shuffle the password
+        char[] passwordChars = password.toString().toCharArray();
+        for (int i = passwordChars.length - 1; i > 0; i--) {
+            int j = (int) (Math.random() * (i + 1));
+            char temp = passwordChars[i];
+            passwordChars[i] = passwordChars[j];
+            passwordChars[j] = temp;
+        }
+        String newPassword = new String(passwordChars);
+
+        // Encode and update password
+        user = encodeUserPassword(user, newPassword);
+        userJpaRepository.save(user);
+
+        // send email to report it.
+        String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 비밀번호가 초기화되었음을 알려드립니다.";
+        String messageCode = "새 비밀번호: " + newPassword;
+        String messageFooter = "위 비밀번호를 아무에게도 공개하지 마세요!\n로그인하신 후 즉시 비밀번호를 변경해주세요.\n감사합니다.";
+        final String apiKey = mailgunProperties.getKey();
+        final String senderDomain = mailgunProperties.getDomain();
+        try {
+            HttpResponse<JsonNode> request = Unirest
+                    .post("https://api.mailgun.net/v3/" + senderDomain + "/messages")
+                    .basicAuth("api", apiKey)
+                    .queryString("from", "CBNU CCC <postmaster@" + senderDomain + ">")
+                    .queryString("to", user.getEmail())
+                    .queryString("subject", "[CBNU CCC] 🌱 비밀번호가 초기화되었습니다.")
+                    .queryString("text",
+                            messageHeader + "\n\n" + messageCode + "\n\n" + messageFooter)
+                    .asJson();
+
+            // that the status code is 200 means doing right operation.
+            if (request.getStatus() != 200)
+                return StatusCode.SOMETHING_WENT_WRONG;
+        } catch (UnirestException e) {
+            LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL, e.getMessage(), null);
+            return StatusCode.SOMETHING_WENT_WRONG;
+        }
+
         return StatusCode.NO_ERROR;
     }
 
