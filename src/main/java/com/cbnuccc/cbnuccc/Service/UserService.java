@@ -38,6 +38,7 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -169,6 +170,7 @@ public class UserService {
     }
 
     // create a user.
+    @Transactional
     public DataWithStatusCode<LimitedUserDto> createUser(MyUser user) {
         user.setUuid(UUID.randomUUID());
         String email = user.getEmail();
