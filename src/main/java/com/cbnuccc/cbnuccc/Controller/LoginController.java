@@ -1,6 +1,5 @@
 package com.cbnuccc.cbnuccc.Controller;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -9,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cbnuccc.cbnuccc.Dto.LoginDto;
 import com.cbnuccc.cbnuccc.Dto.TokenDto;
 import com.cbnuccc.cbnuccc.Service.LoginService;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
@@ -26,30 +26,20 @@ public class LoginController {
     private final SecurityUtil securityUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginJWT(HttpServletRequest request, @RequestBody Map<String, String> data) {
-        // check enough body
-        if (!(data.containsKey("email") && data.containsKey("password"))) {
-            LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_ENOUGH_ARGS));
-            return StatusCode.NO_ENOUGH_ARGS.makeErrorResponseEntity();
-        }
-
-        // set variables of auth information.
-        String email = data.get("email");
-        String password = data.get("password");
-        boolean rememberMe = Boolean.parseBoolean(data.get("rememberMe")); // default value is false
-
+    public ResponseEntity<?> loginJWT(HttpServletRequest request, @RequestBody LoginDto data) {
         // login
         String ip = SecurityUtil.getClientIp(request);
-        TokenDto tokenDto = loginService.login(email, password, rememberMe, ip);
+        TokenDto tokenDto = loginService.login(data.getEmail(), data.getPassword(), data.getRememberMe(), ip);
         if (tokenDto == null) {
-            StatusCode code = loginService.recordLoginFailure(email, ip);
+            // handle an unexpected situation.
+            StatusCode code = loginService.recordLoginFailure(data.getEmail(), ip);
 
             if (code.checkIsError()) {
                 LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeStatusCodeMessageKV(code));
                 return code.makeErrorResponseEntity();
             }
 
-            if (!loginService.checkLoginable(email, ip))
+            if (!loginService.checkLoginable(data.getEmail(), ip))
                 return StatusCode.ACCOUNT_LOCKED.makeErrorResponseEntity();
 
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
