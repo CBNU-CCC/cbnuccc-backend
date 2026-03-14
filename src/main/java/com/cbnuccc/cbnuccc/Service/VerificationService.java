@@ -72,7 +72,7 @@ public class VerificationService {
     }
 
     // send a email with the code.
-    public StatusCode sendMailCode(String to, String code) {
+    public StatusCode sendEmailCode(String to, String code) {
         // check if it runs 5 minutes after the last sending.
         // otherwise, should not run.
 

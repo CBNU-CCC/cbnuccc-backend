@@ -31,7 +31,7 @@ public class VerificationController {
         final String code = verificationService.makeCode();
 
         // send mail with code
-        StatusCode errCode = verificationService.sendMailCode(email, code);
+        StatusCode errCode = verificationService.sendEmailCode(email, code);
         if (errCode.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL, LogUtil.makeStatusCodeMessageKV(errCode));
             return errCode.makeErrorResponseEntity();
