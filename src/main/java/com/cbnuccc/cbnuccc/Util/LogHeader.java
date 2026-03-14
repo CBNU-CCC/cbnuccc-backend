@@ -7,6 +7,7 @@ public enum LogHeader {
     CREATE_USER,
     GET_USER,
     UPDATE_USER,
+    UPDATE_USER_PASSWORD,
     DELETE_USER,
     GET_ME,
     CHECK_EMAIL_DUPLICATION,

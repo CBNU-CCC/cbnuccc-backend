@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
+import com.cbnuccc.cbnuccc.Dto.OldAndNewPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Service.UserService;
@@ -132,6 +133,21 @@ public class UserController {
         }
 
         LogUtil.printBasicInfoLog(LogHeader.UPDATE_USER, LogUtil.makeUuidStringKV(uuid));
+        return getMyUserData(authentication);
+    }
+
+    // update user by uuid
+    @PatchMapping("/user/password")
+    public ResponseEntity<?> updateUserPassword(Authentication authentication,
+            @RequestBody OldAndNewPasswordDto passwords) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        StatusCode code = userService.updateUserPasswordByUuid(uuid, passwords);
+        if (code.checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.UPDATE_USER_PASSWORD, LogUtil.makeStatusCodeMessageKV(code));
+            return code.makeErrorResponseEntity();
+        }
+
+        LogUtil.printBasicInfoLog(LogHeader.UPDATE_USER_PASSWORD, LogUtil.makeUuidStringKV(uuid));
         return getMyUserData(authentication);
     }
 

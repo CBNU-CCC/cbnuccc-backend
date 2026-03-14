@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.cbnuccc.cbnuccc.Config.SecurityConfig;
 import com.cbnuccc.cbnuccc.Config.SupabaseProperties;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
+import com.cbnuccc.cbnuccc.Dto.OldAndNewPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Verification;
@@ -41,6 +43,7 @@ public class UserService {
     private final SecurityUtil securityUtil;
     private final WebClient webClient;
     private final SupabaseProperties supabaseProperties;
+    private final SecurityConfig securityConfig;
 
     // make User to UserDto.
     private UserDto userToUserDto(MyUser user) {
@@ -211,6 +214,30 @@ public class UserService {
             oldUser.setGrade(user.getGrade());
 
         userJpaRepository.save(oldUser);
+        return StatusCode.NO_ERROR;
+    }
+
+    // update user's password by uuid.
+    public StatusCode updateUserPasswordByUuid(UUID uuid, OldAndNewPasswordDto passwords) {
+        Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
+        if (_user.isEmpty())
+            return StatusCode.NO_USER_FOUND;
+        MyUser user = _user.get();
+
+        // check old password is matched
+        String oldPassword = securityUtil.addPepper(passwords.getOldPassword());
+        boolean isMatchedPassword = securityConfig.passwordEncoder().matches(oldPassword, user.getPassword());
+        if (!isMatchedPassword)
+            return StatusCode.PASSWORD_IS_INCURRECT;
+
+        // check if given new password is valid
+        boolean isValidPassword = securityUtil.checkValidPassword(passwords.getNewPassword());
+        if (!isValidPassword)
+            return StatusCode.INVALID_PASSWORD;
+
+        // change the password
+        user = encodeUserPassword(user, passwords.getNewPassword());
+        userJpaRepository.save(user);
         return StatusCode.NO_ERROR;
     }
 

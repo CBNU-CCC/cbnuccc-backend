@@ -30,7 +30,8 @@ public enum StatusCode {
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "Given email is not found or the account is locked for 10 minutes.", 16),
     CANNOT_SEND_EMAIL_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST,
             "Cannot request email verification within the last 5 minutes.", 17),
-    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "Given password is invalid.", 18);
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "Given password is invalid.", 18),
+    PASSWORD_IS_INCURRECT(HttpStatus.BAD_REQUEST, "Given password is incurrect", 19);
 
     @Getter
     private final HttpStatusCode responseStatus;

@@ -25,6 +25,16 @@ public class SecurityUtil {
     @Getter
     private final SecretKey jwtKey;
 
+    // check contains any character of chars in given string.
+    private boolean containsAnyChar(String string, String chars) {
+        for (char character : chars.toCharArray()) {
+            if (string.indexOf(character) != -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // list of methods and uris which does not need to get filtered.
     public static final List<ExcludePath> EXCLUDE_LIST = List.of(
             new ExcludePath(HttpMethod.GET, "/email-duplication"),
@@ -80,18 +90,21 @@ public class SecurityUtil {
 
     // check if given password(plain password) is vaild or not.
     public boolean checkValidPassword(String password) {
+        if (password == null)
+            return false;
+
         // password's length should be 8 to 15.
         if (!(8 <= password.length() && password.length() <= 15))
             return false;
 
         // password should include one or more special characters.
         String specialChars = "`-=~!@#$%^&*()_+{{}|[]\\;':\",./<>?";
-        if (!password.contains(specialChars))
+        if (!containsAnyChar(password, specialChars))
             return false;
 
         // password should include one or more special digits.
         String numbers = "1234567890";
-        if (!password.contains(numbers))
+        if (!containsAnyChar(password, numbers))
             return false;
 
         return true;
