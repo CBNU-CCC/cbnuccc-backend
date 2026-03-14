@@ -31,7 +31,9 @@ public enum StatusCode {
     CANNOT_SEND_EMAIL_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST,
             "Cannot request email verification within the last 5 minutes.", 17),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "Given password is invalid.", 18),
-    PASSWORD_IS_INCURRECT(HttpStatus.BAD_REQUEST, "Given password is incurrect", 19);
+    PASSWORD_IS_INCURRECT(HttpStatus.BAD_REQUEST, "Given password is incurrect", 19),
+    CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST,
+            "Cannot change password within the last 5 minutes.", 20);
 
     @Getter
     private final HttpStatusCode responseStatus;

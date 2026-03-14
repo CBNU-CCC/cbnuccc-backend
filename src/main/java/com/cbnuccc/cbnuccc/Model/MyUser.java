@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Model;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Entity;
@@ -41,4 +42,6 @@ public class MyUser {
     private Short grade;
 
     private String studentId;
+
+    private OffsetDateTime passwordChangedAt;
 }

@@ -30,6 +30,7 @@ import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
+import com.cbnuccc.cbnuccc.Util.OffsetDateTimeUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 import com.mashape.unirest.http.HttpResponse;
@@ -232,6 +233,10 @@ public class UserService {
             return StatusCode.NO_USER_FOUND;
         MyUser user = _user.get();
 
+        // only can change password 5 minutes after the last time to change it.
+        if (user.getPasswordChangedAt().isAfter(OffsetDateTimeUtil.getNow().minusMinutes(5)))
+            return StatusCode.CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES;
+
         // check old password is matched
         String oldPassword = securityUtil.addPepper(passwords.getOldPassword());
         boolean isMatchedPassword = securityConfig.passwordEncoder().matches(oldPassword, user.getPassword());
@@ -244,6 +249,7 @@ public class UserService {
             return StatusCode.INVALID_PASSWORD;
 
         // change the password
+        user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
         user = encodeUserPassword(user, passwords.getNewPassword());
         userJpaRepository.save(user);
         return StatusCode.NO_ERROR;
@@ -262,6 +268,10 @@ public class UserService {
         if (_user.isEmpty() || _user.size() > 1)
             return StatusCode.NO_USER_FOUND;
         MyUser user = _user.get(0);
+
+        // only can change password 5 minutes after the last time to change it.
+        if (user.getPasswordChangedAt().isAfter(OffsetDateTimeUtil.getNow().minusMinutes(5)))
+            return StatusCode.CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES;
 
         // make new password
         String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -298,6 +308,7 @@ public class UserService {
         String newPassword = new String(passwordChars);
 
         // Encode and update password
+        user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
         user = encodeUserPassword(user, newPassword);
         userJpaRepository.save(user);
 
