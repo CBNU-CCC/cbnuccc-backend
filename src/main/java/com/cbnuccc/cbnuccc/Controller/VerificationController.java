@@ -30,15 +30,15 @@ public class VerificationController {
         String email = body.get("email");
         final String code = verificationService.makeCode();
 
-        // save data to verification table
-        StatusCode errCode = verificationService.saveEmailVerification(email, code);
+        // send mail with code
+        StatusCode errCode = verificationService.sendMailCode(email, code);
         if (errCode.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL, LogUtil.makeStatusCodeMessageKV(errCode));
             return errCode.makeErrorResponseEntity();
         }
 
-        // send mail with code
-        errCode = verificationService.sendMailCode(email, code);
+        // save data to verification table
+        errCode = verificationService.saveEmailVerification(email, code);
         if (errCode.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL, LogUtil.makeStatusCodeMessageKV(errCode));
             return errCode.makeErrorResponseEntity();

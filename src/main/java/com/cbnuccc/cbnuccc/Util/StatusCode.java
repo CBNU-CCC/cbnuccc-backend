@@ -27,7 +27,9 @@ public enum StatusCode {
     NO_PRAYER_FOUND(HttpStatus.NOT_FOUND, "Cannot found given prayer.", 13),
     NO_MISSION_FOUND(HttpStatus.NOT_FOUND, "Cannot found given mission.", 14),
     EXCEED_1MB(HttpStatus.BAD_REQUEST, "Compressed file size cannot exceed 1MB.", 15),
-    ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "Given email is not found or the account is locked for 10 minutes.", 16);
+    ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "Given email is not found or the account is locked for 10 minutes.", 16),
+    CANNOT_SEND_EMAIL_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST,
+            "Cannot request email verification within the last 5 minutes.", 17);
 
     @Getter
     private final HttpStatusCode responseStatus;

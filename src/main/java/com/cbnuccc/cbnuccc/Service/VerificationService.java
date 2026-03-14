@@ -73,6 +73,15 @@ public class VerificationService {
 
     // send a email with the code.
     public StatusCode sendMailCode(String to, String code) {
+        // check if it runs 5 minutes after the last sending.
+        // otherwise, should not run.
+
+        if (!checkExpiredEmailRequest(to)) {
+            // it is on the DB properly not expired.
+            return StatusCode.CANNOT_SEND_EMAIL_WITHIN_5_MINUTES;
+        }
+
+        // send a verification email.
         String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 인증 코드를 알려드립니다.";
         String messageCode = "인증 코드: " + code;
         String messageFooter = "위 코드를 아무에게도 공개하지 마세요!\n감사합니다.";
