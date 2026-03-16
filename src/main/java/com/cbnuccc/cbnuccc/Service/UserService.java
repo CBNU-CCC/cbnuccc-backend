@@ -1,6 +1,5 @@
 package com.cbnuccc.cbnuccc.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,6 +107,13 @@ public class UserService {
         return user;
     }
 
+    // make user's student id encoded.
+    private MyUser encodeUserStudentId(MyUser user, String planeStudentId) {
+        String encodedStudentId = passwordEncoder.encode(securityUtil.addPepper(planeStudentId));
+        user.setStudentId(encodedStudentId);
+        return user;
+    }
+
     // check a user by email if it is duplicated.
     private boolean checkDuplicatedUserByEmail(String email) {
         Optional<MyUser> user = userJpaRepository.findByEmail(email);
@@ -179,10 +185,12 @@ public class UserService {
         if (!checkIsVerifiedEmail(email))
             return new DataWithStatusCode<>(StatusCode.NOT_VERIFIED, null);
 
-        // checking and encoding the password.
+        // checking and encoding the password and student id.
         if (!securityUtil.checkValidPassword(user.getPassword()))
             return new DataWithStatusCode<>(StatusCode.INVALID_PASSWORD, null);
+
         user = encodeUserPassword(user, user.getPassword());
+        user = encodeUserStudentId(user, user.getStudentId());
 
         user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
 
@@ -259,17 +267,18 @@ public class UserService {
 
     // send a email to reset password
     public StatusCode resetPassword(ResetPasswordDto resetPasswordDto) {
-        // make example
-        MyUser example = new MyUser();
-        example.setEmail(resetPasswordDto.getEmail());
-        example.setName(resetPasswordDto.getName());
-        example.setStudentId(resetPasswordDto.getStudentId());
-
         // find matched user
-        List<MyUser> _user = userJpaRepository.findAll(Example.of(example));
-        if (_user.isEmpty() || _user.size() > 1)
+        Optional<MyUser> _user = userJpaRepository.findByEmail(resetPasswordDto.getEmail());
+        if (_user.isEmpty())
             return StatusCode.NO_USER_FOUND;
-        MyUser user = _user.get(0);
+        MyUser user = _user.get();
+
+        // check if it is the currect user
+        if (!resetPasswordDto.getName().equals(user.getName()))
+            return StatusCode.NO_USER_FOUND;
+
+        if (!passwordEncoder.matches(securityUtil.addPepper(resetPasswordDto.getStudentId()), user.getStudentId()))
+            return StatusCode.NO_USER_FOUND;
 
         // only can change password 5 minutes after the last time to change it.
         if (user.getPasswordChangedAt().isAfter(OffsetDateTimeUtil.getNow().minusMinutes(5)))
