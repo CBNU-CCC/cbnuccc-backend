@@ -321,7 +321,6 @@ public class UserService {
         String newPassword = new String(passwordChars);
 
         // Encode and update password
-        user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
         user = encodeUserPassword(user, newPassword);
         userJpaRepository.save(user);
 
