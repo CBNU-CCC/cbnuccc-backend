@@ -3,6 +3,7 @@ package com.cbnuccc.cbnuccc.Filter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.cbnuccc.cbnuccc.Model.MyUser;
+import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.SecurityUtil;
@@ -32,6 +35,9 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private SecurityUtil securityUtil;
+
+    @Autowired
+    private UserJpaRepository userJpaRepository;
 
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
@@ -89,8 +95,19 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
+        // add log property 'entered_user_uuid' printed when printing logs.
+        String uuidString = claim.get("uuid").toString();
+        MDC.put("entered_user_uuid", uuidString.substring(0, 8));
+
+        // add log property 'entered_user_email' printed when printing logs.
+        UUID uuid = UUID.fromString(uuidString);
+        Optional<MyUser> _enteredUser = userJpaRepository.findByUuid(uuid);
+        if (_enteredUser.isPresent()) {
+            MyUser enteredUser = _enteredUser.get();
+            MDC.put("entered_user_email", String.valueOf(enteredUser.getEmail().hashCode()));
+        }
+
         // print a entering log
-        MDC.put("entered_user_uuid", claim.get("uuid").toString().substring(0, 8));
         LogUtil.printBasicInfoLog(LogHeader.ENTER, (Object[]) null);
 
         // final setting to login.
