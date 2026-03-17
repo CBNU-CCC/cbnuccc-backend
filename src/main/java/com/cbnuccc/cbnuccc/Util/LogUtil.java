@@ -47,10 +47,10 @@ public class LogUtil {
     }
 
     public static void printBasicInfoLog(LogHeader logHeader, Object... kvs) {
-        log.info(logHeader.getHeader(), kvs);
+        log.info(logHeader.getHeader(), kv("log_uuid", UUID.randomUUID()), kvs);
     }
 
     public static void printBasicWarnLog(LogHeader logHeader, Object... kvs) {
-        log.warn(logHeader.getHeader(), kvs);
+        log.warn(logHeader.getHeader(), kv("log_uuid", UUID.randomUUID()), kvs);
     }
 }
