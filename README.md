@@ -6,9 +6,15 @@
 * **Spring Security**
 * **lombok**
 * **slf4j**
+* **Mailgun**<br>이메일 인증 등 이메일 전송용
 * **Supabase**<br>데이터베이스
 * **Railway**<br>서버 배포용
 * **Docker**<br>Railway 컨테이너 제작용
+
+## 🗂️ Release Note
+&nbsp;semver에 따라 `Major.Minor.Patch`의 구성을 따릅니다. 중요한 경우를 제외하고 `Patch`가 변경된 경우에 해당 Release Note에 작성하지 않습니다.
+### 1.0.0
+&nbsp;기본적인 서버 배포 (2026. 3. 19.)
 
 ## 💻 Developers
 ### 2026
