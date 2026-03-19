@@ -166,9 +166,9 @@ public class MissionController {
         long sumOfImageSizes = 0;
         for (MultipartFile file : files)
             sumOfImageSizes += file.getSize();
-        if (sumOfImageSizes > 1 * 1024 * 1024) { // 1MB
+        if (sumOfImageSizes > 2 * 1024 * 1024) { // 2MB
             LogUtil.printBasicWarnLog(LogHeader.UPLOAD_MISSION_IMAGE, (Object[]) null);
-            return StatusCode.EXCEED_1MB.makeErrorResponseEntity();
+            return StatusCode.EXCEED_2MB.makeErrorResponseEntity();
         }
 
         // save files
