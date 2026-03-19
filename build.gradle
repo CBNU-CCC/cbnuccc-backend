@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.cbnuccc'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 description = 'Server for introducing CBNU CCC.'
 
 java {
