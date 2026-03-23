@@ -29,7 +29,8 @@ public class LoginController {
     public ResponseEntity<?> loginJWT(HttpServletRequest request, @RequestBody LoginDto data) {
         // login
         String ip = SecurityUtil.getClientIp(request);
-        TokenDto tokenDto = loginService.login(data.getEmail(), data.getPassword(), data.getRememberMe(), ip);
+        TokenDto tokenDto = loginService.login(
+                data.getEmail().toLowerCase(), data.getPassword(), data.getRememberMe(), ip);
         if (tokenDto == null) {
             // handle an unexpected situation.
             StatusCode code = loginService.recordLoginFailure(data.getEmail(), ip);
