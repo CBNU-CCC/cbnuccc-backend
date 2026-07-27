@@ -32,7 +32,7 @@ public class PrayerController {
     private final UserService userService;
     private final PrayerService prayerService;
 
-    // get all prayers but not anonymous ones.
+    // 모든 공개된 기도 가져오기
     @GetMapping("/prayer")
     public ResponseEntity<?> getPrayers(Pageable pageable) {
         Page<PrayerDto> result = prayerService.getAllNotAnonymousPrayers(pageable);
@@ -44,7 +44,7 @@ public class PrayerController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
-    // get a specific prayer.
+    // 특정 기도 하나만 가져오기
     @GetMapping("/prayer/{id}")
     public ResponseEntity<?> getPrayersById(@PathVariable("id") int id) {
         DataWithStatusCode<PrayerDto> result = prayerService.getNotAnonymousSpecificPrayer(id);
@@ -58,7 +58,7 @@ public class PrayerController {
         return ResponseEntity.ok(result.data());
     }
 
-    // get all my prayers.
+    // 내 모든 기도 가져오기
     @GetMapping("/my-prayer")
     public ResponseEntity<?> getMyPrayers(Authentication authentication, Pageable pageable) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -71,7 +71,7 @@ public class PrayerController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
-    // get all my prayers.
+    // 내 특정 기도 하나만 가져오기
     @GetMapping("/my-prayer/{id}")
     public ResponseEntity<?> getMyPrayerById(Authentication authentication, @PathVariable("id") int id) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -86,7 +86,7 @@ public class PrayerController {
         return ResponseEntity.ok(result.data());
     }
 
-    // create a prayer.
+    // 기도 생성하기
     @PostMapping("/prayer")
     public ResponseEntity<?> createPrayer(Authentication authentication, @RequestBody PrayerDto prayerDto) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -101,7 +101,7 @@ public class PrayerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 
-    // update a prayer
+    // 기도 수정하기
     @PatchMapping("/prayer/{id}")
     public ResponseEntity<?> updatePrayer(
             Authentication authentication,
@@ -118,15 +118,15 @@ public class PrayerController {
         return getMyPrayerById(authentication, id);
     }
 
-    // delete a prayer
+    // 기도 삭제하기
     @DeleteMapping("/prayer/{id}")
     public ResponseEntity<?> deletePrayer(
             Authentication authentication,
             @PathVariable("id") int id) {
-        // get auth info.
+        // 작성자 uuid 가져오기
         UUID uuid = userService.getUuidFromAuth(authentication);
 
-        // get being deleted data
+        // 삭제될 데이터 가져오기
         DataWithStatusCode<PrayerDto> _deletedPrayer = prayerService.getPrayerById(id, uuid);
         StatusCode code = _deletedPrayer.code();
         if (code.checkIsError()) {
@@ -135,7 +135,7 @@ public class PrayerController {
         }
         PrayerDto deletedPrayer = _deletedPrayer.data();
 
-        // delete data
+        // 삭제하기
         StatusCode result = prayerService.deletePrayer(id, uuid);
         if (result.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_PRAYER, LogUtil.makeStatusCodeMessageKV(code));
@@ -146,7 +146,7 @@ public class PrayerController {
         return ResponseEntity.ok(deletedPrayer);
     }
 
-    // get all prayer author's uuid
+    // 모든 기도 작성자 가져오기
     @GetMapping("/prayer/author")
     public ResponseEntity<?> getAllAuthorUuid(Pageable pageable) {
         Page<UUID> uuids = prayerService.getAllAuthorUuid(pageable);

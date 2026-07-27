@@ -27,12 +27,12 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginJWT(HttpServletRequest request, @RequestBody LoginDto data) {
-        // login
+        // 로그인
         String ip = SecurityUtil.getClientIp(request);
         String email = data.getEmail().toLowerCase();
         TokenDto tokenDto = loginService.login(email, data.getPassword(), data.getRememberMe(), ip);
         if (tokenDto == null) {
-            // handle an unexpected situation.
+            // 예외 상황 처리
             StatusCode code = loginService.recordLoginFailure(email, ip);
 
             if (code.checkIsError()) {
@@ -46,7 +46,7 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // get uuid from created token and print log
+        // 새로 생성된 토큰의 uuid 추출 및 로그 출력
         UUID uuid = UUID.fromString(securityUtil.extractToken(tokenDto.getToken()).get("uuid").toString());
         LogUtil.printBasicInfoLog(LogHeader.LOGIN, LogUtil.makeUuidStringKV(uuid));
 

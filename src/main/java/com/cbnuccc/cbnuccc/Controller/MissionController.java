@@ -37,7 +37,7 @@ public class MissionController {
     private final UserService userService;
     private final MissionService missionService;
 
-    // get all missions.
+    // 모든 선교 가져오기
     @GetMapping("/mission")
     public ResponseEntity<?> getMission(Pageable pageable) {
         Page<MissionDto> result = missionService.getAllMissions(pageable);
@@ -49,7 +49,7 @@ public class MissionController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 
-    // get a specific mission.
+    // 특정 하나의 선교만 가져오기
     @GetMapping("/mission/{id}")
     public ResponseEntity<?> getSpecificMission(@PathVariable("id") int id) {
         DataWithStatusCode<MissionDto> result = missionService.getSpecificMission(id);
@@ -63,7 +63,7 @@ public class MissionController {
         return ResponseEntity.ok(result.data());
     }
 
-    // get my missions.
+    // 본인의 모든 선교 가져오기
     @GetMapping("/my-mission")
     public ResponseEntity<?> getMyMissions(Authentication authentication, Pageable pageable) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -76,7 +76,7 @@ public class MissionController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(missions));
     }
 
-    // create a mission.
+    // 선교 생성하기
     @PostMapping("/mission")
     public ResponseEntity<?> createMission(Authentication authentication, @RequestBody MissionDto missionDto) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -92,7 +92,7 @@ public class MissionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMissionDto);
     }
 
-    // update given mission.
+    // 선교 수정하기
     @PatchMapping("/mission/{id}")
     public ResponseEntity<?> updateMission(Authentication authentication, @PathVariable("id") int id,
             @RequestBody MissionDto missionDto) {
@@ -107,12 +107,12 @@ public class MissionController {
         return getSpecificMission(id);
     }
 
-    // delete given mission.
+    // 선교 삭제하기
     @DeleteMapping("/mission/{id}")
     public ResponseEntity<?> deleteMission(Authentication authentication, @PathVariable("id") int id) {
         UUID uuid = userService.getUuidFromAuth(authentication);
 
-        // being deleted...
+        // 삭제할 선교 내용 가져오기
         DataWithStatusCode<MissionDto> result = missionService.getSpecificMission(id);
         StatusCode code = result.code();
         if (code.checkIsError()) {
@@ -121,7 +121,7 @@ public class MissionController {
         }
         MissionDto deletedMission = result.data();
 
-        // delete it
+        // 삭제하기
         code = missionService.deleteMission(id, uuid);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION, LogUtil.makeStatusCodeMessageKV(code));
@@ -132,7 +132,7 @@ public class MissionController {
         return ResponseEntity.ok(deletedMission);
     }
 
-    // get all mission author's uuid
+    // 모든 선교의 생성자의 uuid 가져오기
     @GetMapping("/mission/author")
     public ResponseEntity<?> getAllAuthorUuid(Pageable pageable) {
         Page<UUID> uuids = missionService.getAllAuthorUuid(pageable);
@@ -143,14 +143,14 @@ public class MissionController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(uuids));
     }
 
-    // upload mission's images
+    // 선교 사진 올리기
     @PostMapping("/mission-image/{id}")
     public ResponseEntity<?> uploadMissionImage(Authentication authentication,
             @RequestParam("files") List<MultipartFile> _files,
             @PathVariable("id") int id) {
         UUID uuid = userService.getUuidFromAuth(authentication);
 
-        // compress images
+        // 이미지 압축하기
         List<MultipartFile> files = new ArrayList<>();
         for (MultipartFile file : _files) {
             DataWithStatusCode<MultipartFile> data = ImageUtil.makeImageLowQuality(file);
@@ -162,7 +162,7 @@ public class MissionController {
             files.add(data.data());
         }
 
-        // check size of all files
+        // 모든 이미지 파일의 용량 확인하기
         long sumOfImageSizes = 0;
         for (MultipartFile file : files)
             sumOfImageSizes += file.getSize();
@@ -171,7 +171,7 @@ public class MissionController {
             return StatusCode.EXCEED_2MB.makeErrorResponseEntity();
         }
 
-        // save files
+        // 이미지 저장하기
         StatusCode code = missionService.uploadMissionImages(files, id, uuid);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.UPLOAD_MISSION_IMAGE, (Object[]) null);
@@ -185,12 +185,12 @@ public class MissionController {
         return StatusCode.NO_ERROR.makeErrorResponseEntity();
     }
 
-    // delete all images of #{id} mission.
+    // 주어진 아이디의 선교 사진 모두 삭제하기
     @DeleteMapping("/mission-image/{id}")
     public ResponseEntity<?> deleteAllMissionImage(Authentication authentication, @PathVariable("id") int id) {
         UUID uuid = userService.getUuidFromAuth(authentication);
 
-        // get information which being deleted
+        // 삭제될 정보 가져오고 확인하기
         DataWithStatusCode<MissionDto> _mission = missionService.getSpecificMission(id);
         StatusCode code = _mission.code();
         if (code.checkIsError()) {
@@ -199,7 +199,7 @@ public class MissionController {
         }
         short originalImageCount = _mission.data().getImageCount();
 
-        // delete all images
+        // 모든 이미지 삭제하기
         code = missionService.deleteAllMissionImages(id, uuid);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION_IMAGE, LogUtil.makeStatusCodeMessageKV(code));
