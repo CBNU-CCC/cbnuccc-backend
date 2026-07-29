@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CORSConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // disallow entering from all origins except following origins:
+        // 아래 origin을 제외한 다른 origin에서의 접근 차단
         String[] origins = { "https://cbnuccc.co.kr", "https://cbnuccc-frontend.vercel.app" };
         registry.addMapping("/**")
                 .allowedOrigins(origins)

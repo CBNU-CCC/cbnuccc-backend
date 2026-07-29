@@ -5,22 +5,21 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-// This DTO class is for data transferring
 @Data
 @AllArgsConstructor
 public class PageDto<T> {
-    // data
+    // 데이터
     List<T> data;
 
-    // size of current slice's elements
+    // 현 페이지의 원소 개수
     Integer length;
 
-    // current page's number of all pages
+    // 현 페이지 수
     Integer pageAt;
 
-    // total number of all pages
+    // 총 페이지 수
     Integer totalPage;
 
-    // total number of all elements
+    // 총 원소 개수
     Long totalElement;
 }

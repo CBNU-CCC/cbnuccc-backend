@@ -36,13 +36,13 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // main page
+    // 메인 페이지
     @GetMapping("/")
     public String home() {
         return "Hello!\nI am okay!\nYou found this... r u a programmer? haha.";
     }
 
-    // get users
+    // 모든 유저 정보 가져오기 (단, 제한된 정보만 노출됨)
     @GetMapping("/user")
     public ResponseEntity<Object> getUser(@RequestBody(required = false) LimitedUserDto userDto, Pageable pageable) {
         if (userDto == null)
@@ -56,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(dtos));
     }
 
-    // get a user by uuid
+    // 특정 사용자 정보만 가져오기 (단, 제한된 정보만 노출됨)
     @GetMapping("/user/{uuid}")
     public ResponseEntity<?> getUserByUuid(@PathVariable("uuid") UUID uuid) {
         LimitedUserDto user = new LimitedUserDto();
@@ -73,7 +73,7 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
-    // get my user data
+    // 내 정보 가져오기
     @GetMapping("/me")
     public ResponseEntity<?> getMyUserData(Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -88,7 +88,7 @@ public class UserController {
         return ResponseEntity.ok(me);
     }
 
-    // check email duplication
+    // 이메일 중복 확인하기
     @GetMapping("/email-duplication")
     public ResponseEntity<?> checkEmailDuplication(@RequestBody Map<String, String> body) {
         if (!body.containsKey("email")) {
@@ -109,7 +109,7 @@ public class UserController {
         return StatusCode.NOT_DUPLICATED_EMAIL.makeErrorResponseEntity();
     }
 
-    // create user, but the user's email should not be same with other's email.
+    // 사용자 생성하기 (단, 이메일 중복되면 안 됨)
     @PostMapping("/user")
     public ResponseEntity<?> createUser(@RequestBody MyUser user) {
         DataWithStatusCode<LimitedUserDto> result = userService.createUser(user);
@@ -123,7 +123,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 
-    // update user by uuid
+    // 사용자 정보 수정하기
     @PatchMapping("/user")
     public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody MyUser user) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -137,7 +137,7 @@ public class UserController {
         return getMyUserData(authentication);
     }
 
-    // update user by uuid
+    // 사용자 비밀번호 수정하기
     @PatchMapping("/user/password")
     public ResponseEntity<?> updateUserPassword(Authentication authentication,
             @RequestBody OldAndNewPasswordDto passwords) {
@@ -152,6 +152,7 @@ public class UserController {
         return getMyUserData(authentication);
     }
 
+    // 비밀번호 초기화하기
     @PatchMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
         StatusCode code = userService.resetPassword(resetPasswordDto);
@@ -164,7 +165,7 @@ public class UserController {
         return code.makeErrorResponseEntity();
     }
 
-    // delete a user by uuid
+    // 사용자 삭제하기
     @DeleteMapping("/user")
     public ResponseEntity<?> deleteUser(Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
@@ -181,7 +182,7 @@ public class UserController {
         return ResponseEntity.ok(deletedUser);
     }
 
-    // upload given user's profile image by uuid (upsert)
+    // 사용자 프로필 사진 업로드하기
     @PostMapping("/profile-image")
     public ResponseEntity<?> uploadProfileImage(Authentication authentication,
             @RequestParam("file") MultipartFile file) {
@@ -207,7 +208,7 @@ public class UserController {
         return code.makeErrorResponseEntity();
     }
 
-    // delete given user's profile image by uuid
+    // 사용자 프로필 사진 삭제하기
     @DeleteMapping("/profile-image")
     public ResponseEntity<?> deleteProfileImage(Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);

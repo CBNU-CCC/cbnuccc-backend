@@ -12,12 +12,12 @@ import org.springframework.data.repository.query.Param;
 import com.cbnuccc.cbnuccc.Model.Mission;
 
 public interface MissionJpaRepository extends JpaRepository<Mission, Long> {
-    // find all missions by given uuid.
+    // 주어진 uuid로 모든 선교 찾기
     Page<Mission> findAllByAuthorUuid(UUID uuid, Pageable pageable);
 
     Optional<Mission> findByIdAndAuthorUuid(Long id, UUID uuid);
 
-    // get author's uuid.
+    // 작성자의 uuid 가져오기
     @Query("""
                 select u.uuid
                 from Mission m
@@ -26,10 +26,10 @@ public interface MissionJpaRepository extends JpaRepository<Mission, Long> {
             """)
     Optional<UUID> findAuthorUuidByMissionId(@Param("missionId") Long missionId);
 
-    // get mission count by uuid
+    // uuid로 선교 개수 가져오기
     int countByAuthorUuid(UUID uuid);
 
-    // get all user's uuid who created a mission.
+    // 모든 선교의 생성자의 uuid 가져오기
     @Query("""
                 select distinct u.uuid
                 from Mission m

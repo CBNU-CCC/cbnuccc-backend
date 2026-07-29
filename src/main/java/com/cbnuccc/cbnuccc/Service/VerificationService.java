@@ -33,9 +33,9 @@ public class VerificationService {
     private final SecurityUtil securityUtil;
     private final MailgunProperties mailgunProperties;
 
-    // if the request is expired, it returns true.
-    // otherwise, it returns false.
-    // also, if the request's email is not on the DB, it returns true.
+    // 요청이 만료되었다면 true를 반환
+    // 그렇지 않다면 false를 반환
+    // 또한, 요청의 이메일이 DB에 없다면 true를 반환
     private boolean checkExpiredEmailRequest(String email) {
         Optional<Verification> _verification = verificationJpaRepository.findByEmail(email.toLowerCase());
         if (_verification.isEmpty())
@@ -43,13 +43,13 @@ public class VerificationService {
 
         Verification verification = _verification.get();
         if (verification.getExpireAt().isBefore(OffsetDateTimeUtil.getNow()))
-            return true; // expired
+            return true; // 만료됨
 
         return false;
     }
 
-    // delete all expired tuples a minute.
-    // 1000 ms/s * 60 s/min = 60000 ms/min (1 min)
+    // 1분마다 만료된 모든 튜플 삭제하기
+    // 1000 ms/s * 60 s/min = 60000 ms/min (1분)
     @Scheduled(fixedRate = 1000 * 60)
     @Transactional
     public void deleteAllExpiredEmails() {
@@ -61,7 +61,7 @@ public class VerificationService {
                     LogUtil.makeCountKV((int) countDeletedRows));
     }
 
-    // make 6-digit code
+    // 6자리 코드 생성하기
     public String makeCode() {
         String result = "";
         for (int i = 0; i < 6; i++) {
@@ -71,17 +71,17 @@ public class VerificationService {
         return result;
     }
 
-    // send a email with the code.
+    // 코드와 함께 이메일 전송하기
     public StatusCode sendEmailCode(String to, String code) {
-        // check if it runs 5 minutes after the last sending.
-        // otherwise, should not run.
+        // 마지막 전송 5분 후에 실행되는지 확인하기
+        // 그렇지 않다면 실행하지 않아야 함
 
         if (!checkExpiredEmailRequest(to)) {
-            // it is on the DB properly not expired.
+            // DB에 정상적으로 존재하며 만료되지 않음
             return StatusCode.CANNOT_SEND_EMAIL_WITHIN_5_MINUTES;
         }
 
-        // send a verification email.
+        // 인증 이메일 전송하기
         String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 인증 코드를 알려드립니다.";
         String messageCode = "인증 코드: " + code;
         String messageFooter = "위 코드를 아무에게도 공개하지 마세요!\n감사합니다.";
@@ -98,7 +98,7 @@ public class VerificationService {
                             messageHeader + "\n\n" + messageCode + "\n\n" + messageFooter)
                     .asJson();
 
-            // that the status code is 200 means doing right operation.
+            // 상태 코드가 200이라는 것은 정상적으로 처리됨
             if (request.getStatus() != 200)
                 return StatusCode.SOMETHING_WENT_WRONG;
         } catch (UnirestException e) {
@@ -108,17 +108,17 @@ public class VerificationService {
         return StatusCode.NO_ERROR;
     }
 
-    // save the email and the code.
+    // 이메일과 코드 저장하기
     public StatusCode saveEmailVerification(String email, String code) {
         email = email.toLowerCase();
         try {
             Optional<Verification> _verification = verificationJpaRepository.findByEmail(email);
             Verification verification = new Verification();
             if (_verification.isEmpty()) {
-                // if there is not given email...
+                // 주어진 이메일이 없다면...
                 verification.setEmail(email);
             } else {
-                // if there's given email...
+                // 주어진 이메일이 있다면...
                 verification = _verification.get();
             }
 
@@ -134,7 +134,7 @@ public class VerificationService {
         }
     }
 
-    // verify the code.
+    // 코드 검증하기
     public StatusCode verifyCode(String email, String code) {
         email = email.toLowerCase();
 
@@ -146,13 +146,13 @@ public class VerificationService {
         if (verification.getIsVerified())
             return StatusCode.ALREADY_VERIFIED;
 
-        // check that is given code right.
+        // 주어진 코드가 올바른지 확인하기
         boolean isRightCode = passwordEncoder.matches(securityUtil.addPepper(code), verification.getCode());
         if (!isRightCode)
             return StatusCode.WRONG_CODE;
 
         if (checkExpiredEmailRequest(email)) {
-            // if expired, delete it.
+            // 만료되었다면 삭제하기
             try {
                 verificationJpaRepository.delete(verification);
             } catch (Exception e) {
@@ -162,7 +162,7 @@ public class VerificationService {
             return StatusCode.REQUEST_IS_EXPIRED;
         }
 
-        // right code and situation.
+        // 올바른 코드 검증 완료
         verification.setIsVerified(true);
 
         try {
