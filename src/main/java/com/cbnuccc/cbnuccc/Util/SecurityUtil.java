@@ -25,7 +25,7 @@ public class SecurityUtil {
     @Getter
     private final SecretKey jwtKey;
 
-    // check contains any character of chars in given string.
+    // 주어진 문자열에 chars의 문자가 하나라도 포함되어 있는지 확인하기
     private boolean containsAnyChar(String string, String chars) {
         for (char character : chars.toCharArray()) {
             if (string.indexOf(character) != -1) {
@@ -35,7 +35,7 @@ public class SecurityUtil {
         return false;
     }
 
-    // list of methods and uris which does not need to get filtered.
+    // 필터링이 필요 없는 메서드와 uri 목록
     public static final List<ExcludePath> EXCLUDE_LIST = List.of(
             new ExcludePath(HttpMethod.GET, "/email-duplication"),
             new ExcludePath(HttpMethod.POST, "/user"),
@@ -51,27 +51,27 @@ public class SecurityUtil {
         this.jwtKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtKey));
     }
 
-    // return a password with pepper.
+    // pepper가 추가된 비밀번호 반환하기
     public String addPepper(String password) {
         return password + pepper;
     }
 
-    // return a token which is authString without "Bearer " if it presents.
-    // otherwise, it returns null.
+    // authString에 "Bearer "가 포함되어 있다면 이를 제거한 토큰을 반환하기
+    // 그렇지 않다면 null을 반환하기
     public Optional<String> getAuthorizationToken(String authString) {
         if (authString != null && authString.length() >= 8 && authString.startsWith("Bearer "))
             return Optional.of(authString.substring(7));
         return null;
     }
 
-    // extract given jwt token.
+    // 주어진 jwt 토큰 추출하기
     public Claims extractToken(String token) {
         Claims claims = Jwts.parser().verifyWith(this.jwtKey).build()
                 .parseSignedClaims(token).getPayload();
         return claims;
     }
 
-    // get client ip.
+    // 클라이언트 ip 가져오기
     public static String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
 
@@ -89,21 +89,21 @@ public class SecurityUtil {
         return ip.split(",")[0];
     }
 
-    // check if given password(plain password) is vaild or not.
+    // 주어진 비밀번호(평문)가 유효한지 확인하기
     public boolean checkValidPassword(String password) {
         if (password == null)
             return false;
 
-        // password's length should be 8 to 15.
+        // 비밀번호 길이는 8~15자여야 함
         if (!(8 <= password.length() && password.length() <= 15))
             return false;
 
-        // password should include one or more special characters.
+        // 비밀번호는 하나 이상의 특수문자를 포함해야 함
         String specialChars = "`-=~!@#$%^&*()_+{{}|[]\\;':\",./<>?";
         if (!containsAnyChar(password, specialChars))
             return false;
 
-        // password should include one or more special digits.
+        // 비밀번호는 하나 이상의 숫자를 포함해야 함
         String numbers = "1234567890";
         if (!containsAnyChar(password, numbers))
             return false;

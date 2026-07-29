@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import lombok.Getter;
 
 public enum StatusCode {
-    // Error codes
+    // 오류 코드
     NO_ERROR(HttpStatus.OK, "오류가 없습니다.", -1),
     SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생했습니다.", 0),
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "주어진 이메일이 중복됩니다.", 1),
@@ -50,7 +50,7 @@ public enum StatusCode {
         this.errorCode = code;
     }
 
-    // make response entity of when returning an error.
+    // 오류를 반환할 때 사용하는 응답 엔티티 생성하기
     public ResponseEntity<?> makeErrorResponseEntity() {
         return ResponseEntity.status(responseStatus).body(Map.of(
                 "errorCode", errorCode,

@@ -13,7 +13,7 @@ import net.coobird.thumbnailator.Thumbnails;
 
 public class ImageUtil {
     public static DataWithStatusCode<MultipartFile> makeImageLowQuality(MultipartFile file) {
-        // get image data
+        // 이미지 데이터 가져오기
         BufferedImage originalImage;
         try {
             originalImage = ImageIO.read(file.getInputStream());
@@ -24,7 +24,7 @@ public class ImageUtil {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
-            // compress image.
+            // 이미지 압축하기
             Thumbnails.of(originalImage)
                     .size(originalImage.getWidth(), originalImage.getHeight())
                     .outputFormat("jpg")
@@ -35,7 +35,7 @@ public class ImageUtil {
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
 
-        // return it
+        // 반환하기
         byte[] compressedImage = os.toByteArray();
         MultipartFile result = new MockMultipartFile("file", "compressed.jpg", "image/jpg", compressedImage);
         return new DataWithStatusCode<>(StatusCode.NO_ERROR, result);

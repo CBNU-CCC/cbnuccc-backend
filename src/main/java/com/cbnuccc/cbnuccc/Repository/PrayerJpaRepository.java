@@ -12,19 +12,19 @@ import org.springframework.data.repository.query.Param;
 import com.cbnuccc.cbnuccc.Model.Prayer;
 
 public interface PrayerJpaRepository extends JpaRepository<Prayer, Long> {
-    // get not anonymous prayers.
+    // 익명이 아닌 기도 가져오기
     Page<Prayer> findAllByAnonymousFalse(Pageable pageable);
 
-    // get all prayers of specific user.
+    // 특정 사용자의 모든 기도 가져오기
     Page<Prayer> findAllByAuthorUuid(UUID uuid, Pageable pageable);
 
-    // get a specific prayer but not anonymous.
+    // 익명이 아닌 특정 기도 가져오기
     Optional<Prayer> findByIdAndAnonymousFalse(Integer id);
 
-    // get a specific prayer by id and user.
+    // id와 사용자로 특정 기도 가져오기
     Optional<Prayer> findByIdAndAuthorUuid(Integer id, UUID uuid);
 
-    // get author's uuid by prayer's id.
+    // 기도 id로 작성자의 uuid 가져오기
     @Query("""
                 select u.uuid
                 from Prayer p
@@ -33,10 +33,10 @@ public interface PrayerJpaRepository extends JpaRepository<Prayer, Long> {
             """)
     Optional<UUID> findAuthorUuidByPrayerId(@Param("prayerId") Long prayerId);
 
-    // get prayer count by uuid
+    // uuid로 기도 개수 가져오기
     int countByAuthorUuid(UUID uuid);
 
-    // get all user's uuid who created a mission.
+    // 모든 기도 작성자의 uuid 가져오기
     @Query("""
                 select distinct u.uuid
                 from Prayer p
