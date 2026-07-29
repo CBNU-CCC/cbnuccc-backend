@@ -13,7 +13,7 @@ import lombok.Data;
 public class MissionDto {
     private Long id;
 
-    // this field is not on the DB.
+    // 해당 필드는 DB에 저장되지 않습니다.
     private UUID authorUuid;
 
     private OffsetDateTime createdAt;

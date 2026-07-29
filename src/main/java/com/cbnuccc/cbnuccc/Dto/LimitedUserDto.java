@@ -16,10 +16,10 @@ public class LimitedUserDto {
 
     private Short grade;
 
-    // It's not on the DB.
+    // 해당 필드는 DB에 저장되지 않습니다.
     private Integer prayerCount = 0;
 
-    // It's not on the DB.
+    // 해당 필드는 DB에 저장되지 않습니다.
     private Integer missionCount = 0;
 
     public LimitedUserDto() {
