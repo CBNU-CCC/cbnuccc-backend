@@ -33,7 +33,8 @@ public enum StatusCode {
             "주어진 비밀번호가 유효하지 않습니다. (비밀번호는 8~15자리여야 하며, 하나 이상의 특수문자와 숫자가 들어가야 합니다.)",
             18),
     PASSWORD_IS_INCURRECT(HttpStatus.BAD_REQUEST, "주어진 비밀번호가 틀렸습니다.", 19),
-    CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST, "5분 이내에 비밀번호를 재설정할 수 없습니다.", 20);
+    CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST, "5분 이내에 비밀번호를 재설정할 수 없습니다.", 20),
+    NO_STC_FOUND(HttpStatus.NOT_FOUND, "주어진 STC 정보가 존재하지 않습니다.", 21);
 
     @Getter
     private final HttpStatusCode responseStatus;

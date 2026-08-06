@@ -31,7 +31,9 @@ public enum LogHeader {
     GET_PRAYER_AUTHOR,
     SCHEDULED_DELETE_VERIFICATION_RECORD,
     SCHEDULED_DELETE_USELESS_LOGIN_RECORD,
-    RESET_PASSWORD;
+    RESET_PASSWORD,
+    CREATE_STC,
+    GET_STC;
 
     @Getter
     private final String header;

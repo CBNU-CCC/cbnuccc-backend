@@ -1,6 +1,6 @@
 package com.cbnuccc.cbnuccc.Model;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
@@ -28,7 +28,7 @@ public class Stc {
     @JoinColumn(name = "author")
     private MyUser author;
 
-    private OffsetDateTime recordDate;
+    private LocalDate recordDate;
 
     private Boolean topic1;
 
