@@ -21,10 +21,10 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
 
         // 모든 기록된 일자 가져오기
         @Query("""
-                        select s.recordDate
-                        from Stc s
-                        group by s.recordDate
-                        order by s.recordDate asc
+                                select s.recordDate
+                                from Stc s
+                                group by s.recordDate
+                                order by s.recordDate asc
                         """)
         List<LocalDate> findAllDates();
 
@@ -56,9 +56,18 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
 
         // 모든 STC 정보의 생성자의 uuid 가져오기
         @Query("""
-                            select distinct u.uuid
-                            from Stc s
-                            join s.author u
+                                select distinct u.uuid
+                                from Stc s
+                                join s.author u
                         """)
         Page<UUID> findAuthorUuid(Pageable pageable);
+
+        // 모든 STC 정보의 주어진 학년 중 생성자의 uuid 가져오기
+        @Query("""
+                                select distinct u.uuid
+                                from Stc s
+                                join s.author u
+                                where u.grade = :grade
+                        """)
+        Page<UUID> findAuthorUuidByGrade(Pageable pageable, Short grade);
 }
