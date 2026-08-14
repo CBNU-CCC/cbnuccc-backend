@@ -99,6 +99,7 @@ public class StcService {
             headerRow.createCell(3).setCellValue("항목1");
             headerRow.createCell(4).setCellValue("항목2");
             headerRow.createCell(5).setCellValue("항목3");
+            headerRow.createCell(6).setCellValue("의견");
 
             // 3. 데이터 행 생성
             int rowNumber = 1;
@@ -124,24 +125,21 @@ public class StcService {
                 // stc 활동에 따른 추가 행 삽입
                 for (LocalDate date : dates) {
                     // 해당 기록일 확인
-                    Optional<Boolean> _topic1 = stcJpaRepository.findTopic1ByAuthorUuidAndRecordDate(
-                            authorUuid,
-                            date);
-                    Optional<Boolean> _topic2 = stcJpaRepository.findTopic2ByAuthorUuidAndRecordDate(
-                            authorUuid,
-                            date);
-                    Optional<Boolean> _topic3 = stcJpaRepository.findTopic3ByAuthorUuidAndRecordDate(
-                            authorUuid,
-                            date);
+                    Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(authorUuid, date);
 
                     // 값 기록 안 했다면 FALSE로 간주
                     boolean topic1 = false, topic2 = false, topic3 = false;
-                    if (_topic1.isPresent())
-                        topic1 = _topic1.get();
-                    if (_topic2.isPresent())
-                        topic2 = _topic2.get();
-                    if (_topic3.isPresent())
-                        topic3 = _topic3.get();
+                    String comment = "";
+                    if (_stc.isPresent()) {
+                        Stc stc = _stc.get();
+                        topic1 = stc.getTopic1();
+                        topic2 = stc.getTopic2();
+                        topic3 = stc.getTopic3();
+
+                        // 의견 존재하면 병기
+                        String _comment = stc.getComment();
+                        comment = _comment == null ? "" : _comment;
+                    }
 
                     // 기록
                     Row r = sheet.createRow(rowNumber++);
@@ -149,6 +147,7 @@ public class StcService {
                     r.createCell(3).setCellValue(topic1);
                     r.createCell(4).setCellValue(topic2);
                     r.createCell(5).setCellValue(topic3);
+                    r.createCell(6).setCellValue(comment);
                 }
             }
 
