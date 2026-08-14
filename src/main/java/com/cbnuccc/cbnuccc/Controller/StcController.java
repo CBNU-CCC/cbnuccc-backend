@@ -22,6 +22,7 @@ import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.PaginationUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -71,5 +72,11 @@ public class StcController {
 
         LogUtil.printBasicInfoLog(LogHeader.CREATE_STC, LogUtil.makeIdKV(result.data().getId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
+    }
+
+    // STC 정보 엑셀로 내려받기
+    @GetMapping("/stc/excel")
+    public void downloadExcel(HttpServletResponse response) {
+        stcService.downloadStc(response);
     }
 }

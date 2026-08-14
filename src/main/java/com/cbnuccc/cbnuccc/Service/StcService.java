@@ -1,12 +1,17 @@
 package com.cbnuccc.cbnuccc.Service;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import com.cbnuccc.cbnuccc.Dto.StcDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Stc;
@@ -17,6 +22,7 @@ import com.cbnuccc.cbnuccc.Util.LogHeader;
 import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -76,6 +82,85 @@ public class StcService {
         } catch (Exception e) {
             LogUtil.printBasicWarnLog(LogHeader.CREATE_STC, LogUtil.makeExceptionKV(e));
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
+        }
+    }
+
+    public void downloadStc(HttpServletResponse response) {
+        try {
+            // 1. 엑셀 워크북 생성 (.xlsx)
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("STC 종합");
+
+            // 2. 헤더(제목 행) 생성
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("학년");
+            headerRow.createCell(1).setCellValue("이름");
+            headerRow.createCell(2).setCellValue("기록일");
+            headerRow.createCell(3).setCellValue("항목1");
+            headerRow.createCell(4).setCellValue("항목2");
+            headerRow.createCell(5).setCellValue("항목3");
+
+            // 3. 데이터 행 생성
+            int rowNumber = 1;
+            List<LocalDate> dates = stcJpaRepository.findAllDates();
+
+            Page<UUID> authors = stcJpaRepository.findAuthorUuid(Pageable.unpaged());
+            for (UUID authorUuid : authors) {
+                // 각 참여자의 학년 및 이름 정보 가져오기
+                Optional<MyUser> _author = userJpaRepository.findByUuid(authorUuid);
+                if (_author.isEmpty())
+                    continue;
+                MyUser author = _author.get();
+
+                // 참여자 헤더
+                Row userHeaderRow = sheet.createRow(rowNumber++);
+                userHeaderRow.createCell(0).setCellValue(author.getGrade()); // 학년
+                userHeaderRow.createCell(1).setCellValue(author.getName()); // 이름
+                userHeaderRow.createCell(2).setCellValue("소계");
+                userHeaderRow.createCell(3).setCellValue(stcJpaRepository.countByAuthorUuidAndTopic1True(authorUuid));
+                userHeaderRow.createCell(4).setCellValue(stcJpaRepository.countByAuthorUuidAndTopic2True(authorUuid));
+                userHeaderRow.createCell(5).setCellValue(stcJpaRepository.countByAuthorUuidAndTopic3True(authorUuid));
+
+                // stc 활동에 따른 추가 행 삽입
+                for (LocalDate date : dates) {
+                    // 해당 기록일 확인
+                    Optional<Boolean> _topic1 = stcJpaRepository.findTopic1ByAuthorUuidAndRecordDate(
+                            authorUuid,
+                            date);
+                    Optional<Boolean> _topic2 = stcJpaRepository.findTopic2ByAuthorUuidAndRecordDate(
+                            authorUuid,
+                            date);
+                    Optional<Boolean> _topic3 = stcJpaRepository.findTopic3ByAuthorUuidAndRecordDate(
+                            authorUuid,
+                            date);
+
+                    // 값 기록 안 했다면 FALSE로 간주
+                    boolean topic1 = false, topic2 = false, topic3 = false;
+                    if (_topic1.isPresent())
+                        topic1 = _topic1.get();
+                    if (_topic2.isPresent())
+                        topic2 = _topic2.get();
+                    if (_topic3.isPresent())
+                        topic3 = _topic3.get();
+
+                    // 기록
+                    Row r = sheet.createRow(rowNumber++);
+                    r.createCell(2).setCellValue(date.toString());
+                    r.createCell(3).setCellValue(topic1);
+                    r.createCell(4).setCellValue(topic2);
+                    r.createCell(5).setCellValue(topic3);
+                }
+            }
+
+            // 4. HTTP 응답 설정
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=STC_excel.xlsx");
+
+            // 5. 스트림으로 엑셀 파일 출력
+            workbook.write(response.getOutputStream());
+            workbook.close();
+        } catch (Exception e) {
+            LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
         }
     }
 }

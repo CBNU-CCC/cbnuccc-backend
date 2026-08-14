@@ -43,10 +43,16 @@ dependencies {
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	implementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.apache.poi:poi:5.2.3'
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs.add("-parameters")
 }
 
 bootJar {

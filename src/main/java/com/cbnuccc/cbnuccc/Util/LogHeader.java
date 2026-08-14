@@ -33,7 +33,8 @@ public enum LogHeader {
     SCHEDULED_DELETE_USELESS_LOGIN_RECORD,
     RESET_PASSWORD,
     CREATE_STC,
-    GET_STC;
+    GET_STC,
+    DOWNLOAD_STC;
 
     @Getter
     private final String header;
