@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 
 @Tag(name="인증 Controller", description="인증 기능")
 @RestController
@@ -39,7 +39,18 @@ public class VerificationController {
         )
     })
     @PostMapping("/verification")
-    public ResponseEntity<?> sendEmailToVerify(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> sendEmailToVerify(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "인증 이메일 요청 객체",
+                required = true,
+                content = @Content(
+                    examples = @ExampleObject(
+                        name = "이메일 발송 예시",
+                        value = "{\"email\": \"user@example.com\"}"
+                    )
+                )
+            )
+            @RequestBody Map<String, String> body) {
         // body로 전달된 인자 확인하기
         if (!body.containsKey("email")) {
             LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL,
@@ -83,7 +94,18 @@ public class VerificationController {
         )
     })
     @PostMapping("/verification/confirmation")
-    public ResponseEntity<?> verifyCode(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> verifyCode(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "인증 코드 검증 요청 객체",
+                required = true,
+                content = @Content(
+                    examples = @ExampleObject(
+                        name = "인증 코드 검증 예시",
+                        value = "{\"email\": \"user@example.com\", \"code\": \"123456\"}"
+                    )
+                )
+            )
+            @RequestBody Map<String, String> body) {
         // body로 전달된 인자 확인하기
         if (!(body.containsKey("email") && body.containsKey("code"))) {
             LogUtil.printBasicWarnLog(LogHeader.CONFIRM_REGISTRATION_CODE,

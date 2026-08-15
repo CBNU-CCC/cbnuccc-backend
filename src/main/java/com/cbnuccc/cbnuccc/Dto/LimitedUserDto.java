@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 
-// 어따 쓰는건지 모름. limited란게 어떤 의미?
+@Schema(description="유저 DTO - 제한적 정보 공개(타인에게 공개)")
 @Data
 @AllArgsConstructor
 public class LimitedUserDto {
@@ -31,7 +31,7 @@ public class LimitedUserDto {
 
     @Schema(
         description = "사용자의 학년",
-        example = "0"
+        example = "3"
     )
     private Short grade;
 

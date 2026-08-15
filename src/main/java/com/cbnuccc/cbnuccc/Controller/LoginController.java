@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Tag(name="Log-in Controller", description = "로그인 시의 기능")
+@Tag(name="Login Controller", description = "로그인 시의 기능")
 @RestController
 @RequiredArgsConstructor
 public class LoginController {

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,9 +53,9 @@ public class UserController {
         return "Hello!\nI am okay!\nYou found this... r u a programmer? haha.";
     }
 
-    @Operation(summary = "모든 유저 정보", description = "모든 유저 정보 가져오기 (단, 제한된 정보만 노출됨)")
+    @Operation(summary = "모든 유저 정보", description = "모든 유저 정보-제한됨- 가져오기")
     @GetMapping("/user")
-    public ResponseEntity<Object> getUser(@RequestBody(required = false) LimitedUserDto userDto, Pageable pageable) {
+    public ResponseEntity<Object> getUser(@ModelAttribute LimitedUserDto userDto, Pageable pageable) {
         if (userDto == null)
             userDto = new LimitedUserDto();
 
@@ -66,7 +67,7 @@ public class UserController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(dtos));
     }
 
-    @Operation(summary="특정 유저 정보", description="특정 사용자 정보만 가져오기 (단, 제한된 정보만 노출됨)")
+    @Operation(summary="특정 유저 정보", description="특정 사용자 정보-제한됨-만 가져오기")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "404", description = "해당 UUID의 사용자를 찾을 수 없음", content = @Content)
