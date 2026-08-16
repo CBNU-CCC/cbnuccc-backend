@@ -116,6 +116,9 @@ public class StcService {
 
                 Page<UUID> authors = stcJpaRepository.findAuthorUuidByGrade(Pageable.unpaged(), grade);
                 for (UUID authorUuid : authors) {
+                    // 가독성을 위해 한 줄 띄우기
+                    rowNumber++;
+
                     // 각 참여자의 학년 및 이름 정보 가져오기
                     Optional<MyUser> _author = userJpaRepository.findByUuid(authorUuid);
                     if (_author.isEmpty())
@@ -198,6 +201,8 @@ public class StcService {
             // 스트림으로 엑셀 파일 출력
             workbook.write(response.getOutputStream());
             workbook.close();
+
+            LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC, (Object[]) null);
         } catch (Exception e) {
             LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
         }
