@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -45,17 +46,18 @@ public class StcController {
     }
 
     // 내 특정 STC 정보 하나만 가져오기
-    @GetMapping("/stc/{id}")
-    public ResponseEntity<?> getMySpecificStc(Authentication authentication, @PathVariable("id") int id) {
+    @GetMapping("/stc/{recordDate}")
+    public ResponseEntity<?> getMySpecificStc(Authentication authentication,
+            @PathVariable("recordDate") LocalDate recordDate) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        DataWithStatusCode<StcDto> result = stcService.getMySpecificStc(id, uuid);
+        DataWithStatusCode<StcDto> result = stcService.getMySpecificStc(recordDate, uuid);
         StatusCode code = result.code();
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.GET_STC, LogUtil.makeStatusCodeMessageKV(code));
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.GET_STC, LogUtil.makeIdKV(id));
+        LogUtil.printBasicInfoLog(LogHeader.GET_STC, LogUtil.makeRecordDateKV(recordDate));
         return ResponseEntity.ok(result.data());
     }
 
@@ -70,7 +72,7 @@ public class StcController {
             return code.makeErrorResponseEntity();
         }
 
-        LogUtil.printBasicInfoLog(LogHeader.CREATE_STC, LogUtil.makeIdKV(result.data().getId()));
+        LogUtil.printBasicInfoLog(LogHeader.CREATE_STC, LogUtil.makeRecordDateKV(result.data().getRecordDate()));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 

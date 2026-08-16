@@ -5,29 +5,24 @@ import java.time.LocalDate;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Setter;
 
 @Data
 @Entity
+@IdClass(StcId.class)
 @Table(name = "stc", schema = "public")
 public class Stc {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(value = AccessLevel.NONE)
-    private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author")
     private MyUser author;
 
+    @Id
     private LocalDate recordDate;
 
     private Boolean topic1;

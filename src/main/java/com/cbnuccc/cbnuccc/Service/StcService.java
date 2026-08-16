@@ -29,6 +29,7 @@ import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -39,9 +40,8 @@ public class StcService {
 
     // Stc를 StcDto로 변환하기
     private StcDto stcToStcDto(Stc stc) {
-        UUID authorUuid = stcJpaRepository.findAuthorUuidByStcId(stc.getId()).get(); // 작성자의 uuid 가져오기
+        UUID authorUuid = stc.getAuthor().getUuid(); // 작성자의 uuid 가져오기
         return new StcDto(
-                stc.getId(),
                 authorUuid,
                 stc.getRecordDate(),
                 stc.getTopic1(),
@@ -51,14 +51,16 @@ public class StcService {
     }
 
     // 내 모든 STC 정보 가져오기
+    @Transactional
     public Page<StcDto> getAllMyStcs(UUID uuid, Pageable pageable) {
         Page<Stc> stcs = stcJpaRepository.findAllByAuthorUuid(uuid, pageable);
         return stcs.map(stc -> stcToStcDto(stc));
     }
 
     // 내 특정 STC 정보 가져오기
-    public DataWithStatusCode<StcDto> getMySpecificStc(long id, UUID uuid) {
-        Optional<Stc> _stc = stcJpaRepository.findByIdAndAuthorUuid(id, uuid);
+    @Transactional
+    public DataWithStatusCode<StcDto> getMySpecificStc(LocalDate recordDate, UUID uuid) {
+        Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(uuid, recordDate);
         if (_stc.isEmpty())
             return new DataWithStatusCode<>(StatusCode.NO_STC_FOUND, null);
         return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(_stc.get()));
