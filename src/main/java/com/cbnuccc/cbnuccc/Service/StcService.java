@@ -191,7 +191,6 @@ public class StcService {
                 }
 
                 sheet.autoSizeColumn(2); // 기록일 컬럼에 대해 크기 조정
-                sheet.autoSizeColumn(6); // 의견 컬럼에 대해 크기 조정
             }
 
             // HTTP 응답 설정
