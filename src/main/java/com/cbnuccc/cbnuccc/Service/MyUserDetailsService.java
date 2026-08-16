@@ -30,7 +30,7 @@ public class MyUserDetailsService implements UserDetailsService {
         var user = result.get();
 
         List<GrantedAuthority> authsList = new ArrayList<>();
-        authsList.add(new SimpleGrantedAuthority(user.getRank().toString()));
+        authsList.add(new SimpleGrantedAuthority("ROLE_" + user.getRank().toString()));
 
         return new User(user.getEmail(), user.getPassword(), authsList);
     }
