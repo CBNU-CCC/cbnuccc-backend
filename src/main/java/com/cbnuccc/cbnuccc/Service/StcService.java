@@ -91,6 +91,7 @@ public class StcService {
         }
     }
 
+    // STC 정보 액셀 다운로드
     public void downloadStc(HttpServletResponse response) {
         try {
             // 엑셀 워크북 생성 (.xlsx)
@@ -201,6 +202,7 @@ public class StcService {
             workbook.write(response.getOutputStream());
             workbook.close();
 
+            // 로그 출력
             LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC, (Object[]) null);
         } catch (Exception e) {
             LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
