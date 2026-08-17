@@ -121,6 +121,10 @@ public class StcService {
             // 엑셀 워크북 생성 (.xlsx)
             Workbook workbook = new XSSFWorkbook();
 
+            // 현재 존재하는 항목 개수 (항목 열은 이 개수만큼 동적으로 생성됨)
+            int topicCount = stcTopicJpaRepository.findMaxTopicNumber().orElse((short) 0);
+            int commentColumnIndex = 3 + topicCount;
+
             // 학년별 시트 생성
             for (short grade = 1; grade <= 5; grade++) {
                 Sheet sheet = workbook.createSheet(grade == 5 ? "기타" : grade + "학년");
@@ -130,10 +134,10 @@ public class StcService {
                 headerRow.createCell(0).setCellValue("학년");
                 headerRow.createCell(1).setCellValue("이름");
                 headerRow.createCell(2).setCellValue("기록일");
-                headerRow.createCell(3).setCellValue("항목1");
-                headerRow.createCell(4).setCellValue("항목2");
-                headerRow.createCell(5).setCellValue("항목3");
-                headerRow.createCell(6).setCellValue("의견");
+                for (int topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
+                    headerRow.createCell(2 + topicNumber).setCellValue("항목" + topicNumber);
+                }
+                headerRow.createCell(commentColumnIndex).setCellValue("의견");
 
                 // 데이터 행 생성
                 int rowNumber = 1;
@@ -155,18 +159,12 @@ public class StcService {
                     userHeaderRow.createCell(0).setCellValue(author.getGrade()); // 학년
                     userHeaderRow.createCell(1).setCellValue(author.getName()); // 이름
                     userHeaderRow.createCell(2).setCellValue("소계");
-                    userHeaderRow.createCell(3)
-                            .setCellValue(
-                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
-                                            authorUuid, (short) 1));
-                    userHeaderRow.createCell(4)
-                            .setCellValue(
-                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
-                                            authorUuid, (short) 2));
-                    userHeaderRow.createCell(5)
-                            .setCellValue(
-                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
-                                            authorUuid, (short) 3));
+                    for (short topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
+                        userHeaderRow.createCell(2 + topicNumber)
+                                .setCellValue(
+                                        stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
+                                                authorUuid, topicNumber));
+                    }
 
                     // stc 활동에 따른 추가 행 삽입
                     for (LocalDate date : dates) {
@@ -174,16 +172,13 @@ public class StcService {
                         Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(authorUuid, date);
 
                         // 값 기록 안 했다면 FALSE로 간주
-                        boolean topic1 = false, topic2 = false, topic3 = false;
+                        Map<Short, Boolean> completionByTopicNumber = Map.of();
                         String comment = "";
                         if (_stc.isPresent()) {
                             Stc stc = _stc.get();
-                            Map<Short, Boolean> completionByTopicNumber = stc.getTopics().stream()
+                            completionByTopicNumber = stc.getTopics().stream()
                                     .collect(Collectors.toMap(stcTopic -> stcTopic.getTopicNumber(),
                                             stcTopic -> stcTopic.getCompletion()));
-                            topic1 = completionByTopicNumber.getOrDefault((short) 1, false);
-                            topic2 = completionByTopicNumber.getOrDefault((short) 2, false);
-                            topic3 = completionByTopicNumber.getOrDefault((short) 3, false);
 
                             // 의견 존재하면 병기
                             String _comment = stc.getComment();
@@ -208,19 +203,14 @@ public class StcService {
                         Row r = sheet.createRow(rowNumber++);
                         r.createCell(2).setCellValue(date.toString());
 
-                        Cell topic1Cell = r.createCell(3);
-                        topic1Cell.setCellValue(topic1);
-                        topic1Cell.setCellStyle(topic1 ? trueStyle : falseStyle);
+                        for (short topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
+                            boolean completion = completionByTopicNumber.getOrDefault(topicNumber, false);
+                            Cell topicCell = r.createCell(2 + topicNumber);
+                            topicCell.setCellValue(completion);
+                            topicCell.setCellStyle(completion ? trueStyle : falseStyle);
+                        }
 
-                        Cell topic2Cell = r.createCell(4);
-                        topic2Cell.setCellValue(topic2);
-                        topic2Cell.setCellStyle(topic2 ? trueStyle : falseStyle);
-
-                        Cell topic3Cell = r.createCell(5);
-                        topic3Cell.setCellValue(topic3);
-                        topic3Cell.setCellStyle(topic3 ? trueStyle : falseStyle);
-
-                        r.createCell(6).setCellValue(comment);
+                        r.createCell(commentColumnIndex).setCellValue(comment);
                     }
                 }
 
