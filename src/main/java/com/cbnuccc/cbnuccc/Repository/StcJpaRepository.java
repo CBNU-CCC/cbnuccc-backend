@@ -12,11 +12,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.cbnuccc.cbnuccc.Model.Stc;
-import com.cbnuccc.cbnuccc.Model.StcId;
 
-public interface StcJpaRepository extends JpaRepository<Stc, StcId> {
+public interface StcJpaRepository extends JpaRepository<Stc, Long> {
         // 주어진 uuid로 모든 STC 정보 찾기
         Page<Stc> findAllByAuthorUuid(UUID uuid, Pageable pageable);
+
+        Optional<Stc> findByIdAndAuthorUuid(Long id, UUID uuid);
 
         // 모든 기록된 일자 가져오기
         @Query("""
@@ -30,6 +31,16 @@ public interface StcJpaRepository extends JpaRepository<Stc, StcId> {
         // 주어진 uuid와 일자로 가져오기
         Optional<Stc> findByAuthorUuidAndRecordDate(@Param("uuid") UUID uuid,
                         @Param("recordDate") LocalDate recordDate);
+
+        // 작성자의 uuid 가져오기
+        @Query("""
+                            select u.uuid
+                            from Stc s
+                            join s.author u
+                            where s.id = :stcId
+
+                        """)
+        Optional<UUID> findAuthorUuidByStcId(@Param("stcId") Long stcId);
 
         // uuid로 STC 정보 개수 가져오기
         int countByAuthorUuid(UUID uuid);
