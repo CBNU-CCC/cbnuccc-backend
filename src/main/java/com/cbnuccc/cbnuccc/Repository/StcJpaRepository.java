@@ -32,27 +32,8 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
         Optional<Stc> findByAuthorUuidAndRecordDate(@Param("uuid") UUID uuid,
                         @Param("recordDate") LocalDate recordDate);
 
-        // 작성자의 uuid 가져오기
-        @Query("""
-                            select u.uuid
-                            from Stc s
-                            join s.author u
-                            where s.id = :stcId
-
-                        """)
-        Optional<UUID> findAuthorUuidByStcId(@Param("stcId") Long stcId);
-
         // uuid로 STC 정보 개수 가져오기
         int countByAuthorUuid(UUID uuid);
-
-        // uuid로 topic1이 true인 STC 개수 가져오기
-        int countByAuthorUuidAndTopic1True(UUID uuid);
-
-        // uuid로 topic2이 true인 STC 개수 가져오기
-        int countByAuthorUuidAndTopic2True(UUID uuid);
-
-        // uuid로 topic3이 true인 STC 개수 가져오기
-        int countByAuthorUuidAndTopic3True(UUID uuid);
 
         // 모든 STC 정보의 생성자의 uuid 가져오기
         @Query("""

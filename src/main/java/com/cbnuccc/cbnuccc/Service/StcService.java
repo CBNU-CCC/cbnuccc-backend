@@ -2,9 +2,12 @@ package com.cbnuccc.cbnuccc.Service;
 
 import java.awt.Color;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -21,7 +24,9 @@ import org.springframework.stereotype.Service;
 import com.cbnuccc.cbnuccc.Dto.StcDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
 import com.cbnuccc.cbnuccc.Model.Stc;
+import com.cbnuccc.cbnuccc.Model.StcTopic;
 import com.cbnuccc.cbnuccc.Repository.StcJpaRepository;
+import com.cbnuccc.cbnuccc.Repository.StcTopicJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
 import com.cbnuccc.cbnuccc.Util.LogHeader;
@@ -29,6 +34,7 @@ import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -36,27 +42,34 @@ import lombok.RequiredArgsConstructor;
 public class StcService {
     private final UserJpaRepository userJpaRepository;
     private final StcJpaRepository stcJpaRepository;
+    private final StcTopicJpaRepository stcTopicJpaRepository;
 
     // Stc를 StcDto로 변환하기
     private StcDto stcToStcDto(Stc stc) {
-        UUID authorUuid = stcJpaRepository.findAuthorUuidByStcId(stc.getId()).get(); // 작성자의 uuid 가져오기
+        UUID authorUuid = stc.getAuthor().getUuid(); // 작성자의 uuid 가져오기
+
+        // stc_topic 테이블에 흩어진 항목별 이수 여부를 하나의 bool 리스트로 합치기 (테이블 분리를 감춤)
+        List<Boolean> topics = stc.getTopics().stream()
+                .map(stcTopic -> stcTopic.getCompletion())
+                .collect(Collectors.toList());
+
         return new StcDto(
                 stc.getId(),
                 authorUuid,
                 stc.getRecordDate(),
-                stc.getTopic1(),
-                stc.getTopic2(),
-                stc.getTopic3(),
+                topics,
                 stc.getComment());
     }
 
     // 내 모든 STC 정보 가져오기
+    @Transactional
     public Page<StcDto> getAllMyStcs(UUID uuid, Pageable pageable) {
         Page<Stc> stcs = stcJpaRepository.findAllByAuthorUuid(uuid, pageable);
         return stcs.map(stc -> stcToStcDto(stc));
     }
 
     // 내 특정 STC 정보 가져오기
+    @Transactional
     public DataWithStatusCode<StcDto> getMySpecificStc(long id, UUID uuid) {
         Optional<Stc> _stc = stcJpaRepository.findByIdAndAuthorUuid(id, uuid);
         if (_stc.isEmpty())
@@ -65,6 +78,7 @@ public class StcService {
     }
 
     // STC 정보 생성하기
+    @Transactional
     public DataWithStatusCode<StcDto> createStc(StcDto stcDto, UUID uuid) {
         // 작성자 정보 찾기
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
@@ -76,13 +90,22 @@ public class StcService {
         Stc stc = new Stc();
         stc.setAuthor(user);
         stc.setRecordDate(stcDto.getRecordDate());
-        stc.setTopic1(stcDto.getTopic1());
-        stc.setTopic2(stcDto.getTopic2());
-        stc.setTopic3(stcDto.getTopic3());
         stc.setComment(stcDto.getComment());
 
+        // 리스트의 인덱스 + 1을 항목 번호로 하여 stc_topic 행 생성하기
+        List<Boolean> completions = stcDto.getTopics();
+        List<StcTopic> topics = new ArrayList<>();
+        for (int i = 0; i < completions.size(); i++) {
+            StcTopic topic = new StcTopic();
+            topic.setStc(stc);
+            topic.setTopicNumber((short) (i + 1));
+            topic.setCompletion(completions.get(i));
+            topics.add(topic);
+        }
+        stc.setTopics(topics);
+
         try {
-            // 저장하기
+            // 저장하기 (stc_topic도 함께 저장됨)
             Stc createdStc = stcJpaRepository.save(stc);
             return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(createdStc));
         } catch (Exception e) {
@@ -92,6 +115,7 @@ public class StcService {
     }
 
     // STC 정보 액셀 다운로드
+    @Transactional
     public void downloadStc(HttpServletResponse response) {
         try {
             // 엑셀 워크북 생성 (.xlsx)
@@ -132,11 +156,17 @@ public class StcService {
                     userHeaderRow.createCell(1).setCellValue(author.getName()); // 이름
                     userHeaderRow.createCell(2).setCellValue("소계");
                     userHeaderRow.createCell(3)
-                            .setCellValue(stcJpaRepository.countByAuthorUuidAndTopic1True(authorUuid));
+                            .setCellValue(
+                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
+                                            authorUuid, (short) 1));
                     userHeaderRow.createCell(4)
-                            .setCellValue(stcJpaRepository.countByAuthorUuidAndTopic2True(authorUuid));
+                            .setCellValue(
+                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
+                                            authorUuid, (short) 2));
                     userHeaderRow.createCell(5)
-                            .setCellValue(stcJpaRepository.countByAuthorUuidAndTopic3True(authorUuid));
+                            .setCellValue(
+                                    stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
+                                            authorUuid, (short) 3));
 
                     // stc 활동에 따른 추가 행 삽입
                     for (LocalDate date : dates) {
@@ -148,9 +178,12 @@ public class StcService {
                         String comment = "";
                         if (_stc.isPresent()) {
                             Stc stc = _stc.get();
-                            topic1 = stc.getTopic1();
-                            topic2 = stc.getTopic2();
-                            topic3 = stc.getTopic3();
+                            Map<Short, Boolean> completionByTopicNumber = stc.getTopics().stream()
+                                    .collect(Collectors.toMap(stcTopic -> stcTopic.getTopicNumber(),
+                                            stcTopic -> stcTopic.getCompletion()));
+                            topic1 = completionByTopicNumber.getOrDefault((short) 1, false);
+                            topic2 = completionByTopicNumber.getOrDefault((short) 2, false);
+                            topic3 = completionByTopicNumber.getOrDefault((short) 3, false);
 
                             // 의견 존재하면 병기
                             String _comment = stc.getComment();

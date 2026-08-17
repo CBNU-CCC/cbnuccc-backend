@@ -1,6 +1,7 @@
 package com.cbnuccc.cbnuccc.Dto;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.annotation.Nullable;
@@ -17,11 +18,8 @@ public class StcDto {
 
     private LocalDate recordDate;
 
-    private Boolean topic1;
-
-    private Boolean topic2;
-
-    private Boolean topic3;
+    // 인덱스 + 1이 항목 번호(topic_number)에 대응하는 이수 여부 목록
+    private List<Boolean> topics;
 
     @Nullable
     private String comment;
