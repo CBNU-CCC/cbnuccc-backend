@@ -47,6 +47,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    // 보안 강화를 위해 비밀번호 관련 기능을 일시적으로 제한함 (https://github.com/CBNU-CCC/cbnuccc-backend/issues/11)
+    private static final boolean PASSWORD_FEATURE_ENABLED = false;
+
     @Operation(summary="메인 페이지", description="접속하면 보여지는 메인 페이지입니다.") 
     @GetMapping("/")
     public String home() {
@@ -160,6 +163,12 @@ public class UserController {
     @PatchMapping("/user/password")
     public ResponseEntity<?> updateUserPassword(@Parameter(hidden = true) Authentication authentication,
             @RequestBody OldAndNewPasswordDto passwords) {
+        if (!PASSWORD_FEATURE_ENABLED) {
+            LogUtil.printBasicWarnLog(LogHeader.UPDATE_USER_PASSWORD,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED));
+            return StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED.makeErrorResponseEntity();
+        }
+
         UUID uuid = userService.getUuidFromAuth(authentication);
         StatusCode code = userService.updateUserPasswordByUuid(uuid, passwords);
         if (code.checkIsError()) {
@@ -174,6 +183,12 @@ public class UserController {
     @Operation(summary="비밀번호 초기화", description="비밀번호 초기화하기")
     @PatchMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+        if (!PASSWORD_FEATURE_ENABLED) {
+            LogUtil.printBasicWarnLog(LogHeader.RESET_PASSWORD,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED));
+            return StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED.makeErrorResponseEntity();
+        }
+
         StatusCode code = userService.resetPassword(resetPasswordDto);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.RESET_PASSWORD, LogUtil.makeEmailKV(resetPasswordDto.getEmail()));
