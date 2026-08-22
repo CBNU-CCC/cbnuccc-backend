@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
+// import java.rmi.server.Operation;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,20 +33,32 @@ import com.cbnuccc.cbnuccc.Util.LogUtil;
 import com.cbnuccc.cbnuccc.Util.PaginationUtil;
 import com.cbnuccc.cbnuccc.Util.StatusCode;
 
+// UserController.java 상단 import 구문 모음
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+
+@Tag(name="User Controller", description = "유저 정보 및 생성/수정, 프로필 설정 등의 기능")
 @RestController
 public class UserController {
     @Autowired
     private UserService userService;
 
-    // 메인 페이지
+    // 보안 강화를 위해 비밀번호 관련 기능을 일시적으로 제한함 (https://github.com/CBNU-CCC/cbnuccc-backend/issues/11)
+    private static final boolean PASSWORD_FEATURE_ENABLED = false;
+
+    @Operation(summary="메인 페이지", description="접속하면 보여지는 메인 페이지입니다.") 
     @GetMapping("/")
     public String home() {
         return "Hello!\nI am okay!\nYou found this... r u a programmer? haha.";
     }
 
-    // 모든 유저 정보 가져오기 (단, 제한된 정보만 노출됨)
+    @Operation(summary = "모든 유저 정보", description = "모든 유저 정보-제한됨- 가져오기")
     @GetMapping("/user")
-    public ResponseEntity<Object> getUser(@RequestBody(required = false) LimitedUserDto userDto, Pageable pageable) {
+    public ResponseEntity<Object> getUser(@ModelAttribute LimitedUserDto userDto, Pageable pageable) {
         if (userDto == null)
             userDto = new LimitedUserDto();
 
@@ -56,9 +70,13 @@ public class UserController {
         return ResponseEntity.ok(PaginationUtil.makePaginationMap(dtos));
     }
 
-    // 특정 사용자 정보만 가져오기 (단, 제한된 정보만 노출됨)
+    @Operation(summary="특정 유저 정보", description="특정 사용자 정보-제한됨-만 가져오기")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "해당 UUID의 사용자를 찾을 수 없음", content = @Content)
+    })
     @GetMapping("/user/{uuid}")
-    public ResponseEntity<?> getUserByUuid(@PathVariable("uuid") UUID uuid) {
+    public ResponseEntity<?> getUserByUuid(@Parameter(description = "조회할 유저의 UUID") @PathVariable("uuid") UUID uuid) {
         LimitedUserDto user = new LimitedUserDto();
         user.setUuid(uuid);
 
@@ -73,9 +91,9 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
-    // 내 정보 가져오기
+    @Operation(summary="내 정보", description="내 정보 가져오기")
     @GetMapping("/me")
-    public ResponseEntity<?> getMyUserData(Authentication authentication) {
+    public ResponseEntity<?> getMyUserData(@Parameter(hidden = true) Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _me = userService.findUserDtoByUuid(uuid);
         if (_me.isEmpty()) {
@@ -88,7 +106,11 @@ public class UserController {
         return ResponseEntity.ok(me);
     }
 
-    // 이메일 중복 확인하기
+    @Operation(summary="중복 이메일 확인", description="이메일 중복 확인하기")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "사용 가능한 이메일"),
+        @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일", content = @Content)
+    })
     @GetMapping("/email-duplication")
     public ResponseEntity<?> checkEmailDuplication(@RequestBody Map<String, String> body) {
         if (!body.containsKey("email")) {
@@ -109,7 +131,7 @@ public class UserController {
         return StatusCode.NOT_DUPLICATED_EMAIL.makeErrorResponseEntity();
     }
 
-    // 사용자 생성하기 (단, 이메일 중복되면 안 됨)
+    @Operation(summary="사용자 생성", description="사용자 생성하기 (이메일 중복 X)") 
     @PostMapping("/user")
     public ResponseEntity<?> createUser(@RequestBody MyUser user) {
         DataWithStatusCode<LimitedUserDto> result = userService.createUser(user);
@@ -123,9 +145,9 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
     }
 
-    // 사용자 정보 수정하기
+    @Operation(summary="정보 수정", description="사용자 정보 수정하기")
     @PatchMapping("/user")
-    public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody MyUser user) {
+    public ResponseEntity<?> updateUser(@Parameter(hidden = true) Authentication authentication, @RequestBody MyUser user) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         StatusCode code = userService.updateUserByUuid(uuid, user);
         if (code.checkIsError()) {
@@ -137,10 +159,16 @@ public class UserController {
         return getMyUserData(authentication);
     }
 
-    // 사용자 비밀번호 수정하기
+    @Operation(summary="비밀번호 수정", description="사용자 비밀번호 수정하기")
     @PatchMapping("/user/password")
-    public ResponseEntity<?> updateUserPassword(Authentication authentication,
+    public ResponseEntity<?> updateUserPassword(@Parameter(hidden = true) Authentication authentication,
             @RequestBody OldAndNewPasswordDto passwords) {
+        if (!PASSWORD_FEATURE_ENABLED) {
+            LogUtil.printBasicWarnLog(LogHeader.UPDATE_USER_PASSWORD,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED));
+            return StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED.makeErrorResponseEntity();
+        }
+
         UUID uuid = userService.getUuidFromAuth(authentication);
         StatusCode code = userService.updateUserPasswordByUuid(uuid, passwords);
         if (code.checkIsError()) {
@@ -152,9 +180,15 @@ public class UserController {
         return getMyUserData(authentication);
     }
 
-    // 비밀번호 초기화하기
+    @Operation(summary="비밀번호 초기화", description="비밀번호 초기화하기")
     @PatchMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+        if (!PASSWORD_FEATURE_ENABLED) {
+            LogUtil.printBasicWarnLog(LogHeader.RESET_PASSWORD,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED));
+            return StatusCode.PASSWORD_FEATURE_TEMPORARILY_DISABLED.makeErrorResponseEntity();
+        }
+
         StatusCode code = userService.resetPassword(resetPasswordDto);
         if (code.checkIsError()) {
             LogUtil.printBasicWarnLog(LogHeader.RESET_PASSWORD, LogUtil.makeEmailKV(resetPasswordDto.getEmail()));
@@ -165,9 +199,9 @@ public class UserController {
         return code.makeErrorResponseEntity();
     }
 
-    // 사용자 삭제하기
+    @Operation(summary="사용자 삭제", description="사용자 삭제하기")
     @DeleteMapping("/user")
-    public ResponseEntity<?> deleteUser(Authentication authentication) {
+    public ResponseEntity<?> deleteUser(@Parameter(hidden = true) Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         ResponseEntity<?> _deletedUser = getMyUserData(authentication);
 
@@ -182,9 +216,9 @@ public class UserController {
         return ResponseEntity.ok(deletedUser);
     }
 
-    // 사용자 프로필 사진 업로드하기
+    @Operation(summary="프로필 업로드", description="사용자 프로필 사진 업로드하기")
     @PostMapping("/profile-image")
-    public ResponseEntity<?> uploadProfileImage(Authentication authentication,
+    public ResponseEntity<?> uploadProfileImage(@Parameter(hidden = true) Authentication authentication,
             @RequestParam("file") MultipartFile file) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
@@ -208,9 +242,9 @@ public class UserController {
         return code.makeErrorResponseEntity();
     }
 
-    // 사용자 프로필 사진 삭제하기
+    @Operation(summary="프로필 사진 삭제", description="사용자 프로필 사진 삭제하기")
     @DeleteMapping("/profile-image")
-    public ResponseEntity<?> deleteProfileImage(Authentication authentication) {
+    public ResponseEntity<?> deleteProfileImage(@Parameter(hidden = true) Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
         if (_user.isEmpty()) {

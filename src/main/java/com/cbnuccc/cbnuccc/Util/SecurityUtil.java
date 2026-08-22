@@ -42,7 +42,10 @@ public class SecurityUtil {
             new ExcludePath(HttpMethod.POST, "/login"),
             new ExcludePath(HttpMethod.POST, "/verification"),
             new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
-            new ExcludePath(HttpMethod.PATCH, "/reset-password"));
+            new ExcludePath(HttpMethod.PATCH, "/reset-password"),
+            new ExcludePath(HttpMethod.GET, "/swagger-ui.html"),
+            new ExcludePath(HttpMethod.GET, "/swagger-ui/**"),
+            new ExcludePath(HttpMethod.GET, "/v3/api-docs/**"));
 
     public SecurityUtil(
             @Value("${pepper}") String pepper,
