@@ -41,7 +41,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
-    // to don't execute twice.
+    // 두 번 실행되지 않도록 처리하기
     @Bean
     public FilterRegistrationBean<JwtFilter> disableJwtFilter(JwtFilter filter) {
         FilterRegistrationBean<JwtFilter> registration = new FilterRegistrationBean<>(filter);
@@ -49,14 +49,14 @@ public class JwtFilter extends OncePerRequestFilter {
         return registration;
     }
 
-    // check for not filtering
+    // 필터링에서 제외할 대상인지 확인하기
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         String method = request.getMethod();
         HttpMethod requestMethod = HttpMethod.valueOf(method);
 
-        // for log
+        // 로그 출력을 위한 설정
         MDC.put("endpoint", requestUri);
         MDC.put("method", method);
         MDC.put("ip", SecurityUtil.getClientIp(request));
@@ -69,11 +69,11 @@ public class JwtFilter extends OncePerRequestFilter {
         return result;
     }
 
-    // filter
+    // 필터링하기
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // get Auth. header to get jwt token.
+        // jwt 토큰을 가져오기 위해 Authorization 헤더 가져오기
         String authString = request.getHeader("Authorization");
         Optional<String> _jwtToken = securityUtil.getAuthorizationToken(authString);
         if (_jwtToken == null) {
@@ -84,7 +84,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
         String jwtToken = _jwtToken.get();
 
-        // extract given token to get cliams.
+        // claim을 가져오기 위해 주어진 토큰 추출하기
         Claims claim;
         try {
             claim = securityUtil.extractToken(jwtToken);
@@ -95,11 +95,11 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // add log property 'entered_user_uuid' printed when printing logs.
+        // 로그 출력 시 'entered_user_uuid' 속성이 함께 출력되도록 추가하기
         String uuidString = claim.get("uuid").toString();
         MDC.put("entered_user_uuid", uuidString.substring(0, 8));
 
-        // add log property 'entered_user_email' printed when printing logs.
+        // 로그 출력 시 'entered_user_email' 속성이 함께 출력되도록 추가하기
         UUID uuid = UUID.fromString(uuidString);
         Optional<MyUser> _enteredUser = userJpaRepository.findByUuid(uuid);
         if (_enteredUser.isPresent()) {
@@ -107,10 +107,10 @@ public class JwtFilter extends OncePerRequestFilter {
             MDC.put("entered_user_email", String.valueOf(enteredUser.getEmail().toLowerCase().hashCode()));
         }
 
-        // print a entering log
+        // 진입 로그 출력하기
         LogUtil.printBasicInfoLog(LogHeader.ENTER, (Object[]) null);
 
-        // final setting to login.
+        // 로그인을 위한 최종 설정
         List<SimpleGrantedAuthority> roles = List.of(new SimpleGrantedAuthority("ROLE_" + claim.get("rank")));
         var authToken = new UsernamePasswordAuthenticationToken(claim.get("uuid").toString(), null, roles);
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.cbnuccc'
-version = '1.0.1'
+version = '1.1.0'
 description = 'Server for introducing CBNU CCC.'
 
 java {
@@ -43,10 +43,17 @@ dependencies {
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	implementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.apache.poi:poi:5.2.3'
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs.add("-parameters")
 }
 
 bootJar {

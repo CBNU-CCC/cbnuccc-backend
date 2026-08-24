@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.cbnuccc.cbnuccc.Model.Login;
 
 public interface LoginJpaRepository extends JpaRepository<Login, Long> {
-    // find login data by email and ip.
+    // 이메일과 ip로 로그인 데이터 찾기
     Optional<Login> findByEmailAndIp(String email, String ip);
 
-    // delete all tuples that the last_login_at is 10 minutes before now.
+    // last_login_at이 현재로부터 10분 이전인 모든 튜플 삭제하기
     Long deleteByLastLoginAtBefore(OffsetDateTime time);
 }

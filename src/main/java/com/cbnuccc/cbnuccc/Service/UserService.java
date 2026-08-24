@@ -54,7 +54,7 @@ public class UserService {
     private final SecurityConfig securityConfig;
     private final MailgunProperties mailgunProperties;
 
-    // make User to UserDto.
+    // User를 UserDto로 변환하기
     private UserDto userToUserDto(MyUser user) {
         return new UserDto(
                 user.getUuid(),
@@ -67,7 +67,7 @@ public class UserService {
                 missionJpaRepository.countByAuthorUuid(user.getUuid()));
     }
 
-    // make UserDto to User.
+    // UserDto를 User로 변환하기
     private MyUser userDtoToUser(UserDto userDto) {
         MyUser user = new MyUser();
         user.setEmail(userDto.getEmail());
@@ -79,7 +79,7 @@ public class UserService {
         return user;
     }
 
-    // make UserDto to LimitedUserDto.
+    // UserDto를 LimitedUserDto로 변환하기
     private LimitedUserDto userDtoToLimitedUserDto(UserDto userDto) {
         LimitedUserDto dto = new LimitedUserDto(
                 userDto.getUuid(),
@@ -91,7 +91,7 @@ public class UserService {
         return dto;
     }
 
-    // make LimitedUserDto to UserDto.
+    // LimitedUserDto를 UserDto로 변환하기
     private UserDto limitedUserDtoToUserDto(LimitedUserDto limitedUserDto) {
         UserDto dto = new UserDto();
         dto.setUuid(limitedUserDto.getUuid());
@@ -101,29 +101,29 @@ public class UserService {
         return dto;
     }
 
-    // make user's password encoded.
+    // 사용자의 비밀번호를 암호화하기
     private MyUser encodeUserPassword(MyUser user, String planePassword) {
         String encodedPassword = passwordEncoder.encode(securityUtil.addPepper(planePassword));
         user.setPassword(encodedPassword);
         return user;
     }
 
-    // make user's student id encoded.
+    // 사용자의 학번을 암호화하기
     private MyUser encodeUserStudentId(MyUser user, String planeStudentId) {
         String encodedStudentId = passwordEncoder.encode(securityUtil.addPepper(planeStudentId));
         user.setStudentId(encodedStudentId);
         return user;
     }
 
-    // check a user by email if it is duplicated.
+    // 이메일로 사용자의 중복 여부 확인하기
     private boolean checkDuplicatedUserByEmail(String email) {
         Optional<MyUser> user = userJpaRepository.findByEmail(email.toLowerCase());
         return user.isPresent();
     }
 
-    // if the email is verified, it returns true.
-    // otherwise, it returns false.
-    // also, if the email is not on the DB, it returns false.
+    // 이메일이 인증되었다면 true를 반환
+    // 그렇지 않다면 false를 반환
+    // 또한, 이메일이 DB에 없다면 false를 반환
     private boolean checkIsVerifiedEmail(String email) {
         Optional<Verification> _verification = verificationJpaRepository.findByEmail(email.toLowerCase());
         if (_verification.isEmpty())
@@ -132,7 +132,7 @@ public class UserService {
         return verification.getIsVerified();
     }
 
-    // find UserDto by given uuid.
+    // 주어진 uuid로 UserDto 찾기
     public Optional<UserDto> findUserDtoByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -141,7 +141,7 @@ public class UserService {
         return Optional.of(result);
     }
 
-    // find UserDto by given email.
+    // 주어진 이메일로 UserDto 찾기
     public Optional<UserDto> findUserDtoByEmail(String email) {
         Optional<MyUser> _user = userJpaRepository.findByEmail(email.toLowerCase());
         if (_user.isEmpty())
@@ -150,7 +150,7 @@ public class UserService {
         return Optional.of(result);
     }
 
-    // find LimitedUserDto by given uuid.
+    // 주어진 uuid로 LimitedUserDto 찾기
     public Optional<LimitedUserDto> findLimitedUserDtoByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -159,23 +159,23 @@ public class UserService {
         return Optional.of(result);
     }
 
-    // find all of users that are matched with given UserDto.
+    // 주어진 UserDto와 일치하는 모든 사용자 찾기
     public Page<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser, Pageable pageable) {
-        // make LimitedUserDto to User
+        // LimitedUserDto를 User로 변환하기
         MyUser example = userDtoToUser(limitedUserDtoToUserDto(exampleUser));
         Page<MyUser> users = userJpaRepository.findAll(Example.of(example), pageable);
 
         return users.map(user -> userDtoToLimitedUserDto(userToUserDto(user)));
     }
 
-    // get uuid from given jwt token.
+    // 주어진 jwt 토큰에서 uuid 가져오기
     public UUID getUuidFromAuth(Authentication authentication) {
         String uuidString = (String) authentication.getPrincipal();
         UUID uuid = UUID.fromString(uuidString);
         return uuid;
     }
 
-    // create a user.
+    // 사용자 생성하기
     @Transactional
     public DataWithStatusCode<LimitedUserDto> createUser(MyUser user) {
         user.setUuid(UUID.randomUUID());
@@ -187,7 +187,7 @@ public class UserService {
         if (!checkIsVerifiedEmail(email))
             return new DataWithStatusCode<>(StatusCode.NOT_VERIFIED, null);
 
-        // checking and encoding the password and student id.
+        // 비밀번호와 학번을 확인하고 암호화하기
         if (!securityUtil.checkValidPassword(user.getPassword()))
             return new DataWithStatusCode<>(StatusCode.INVALID_PASSWORD, null);
 
@@ -198,7 +198,7 @@ public class UserService {
 
         try {
             MyUser createdUser = userJpaRepository.save(user);
-            verificationJpaRepository.deleteByEmail(email); // delete verified user from verification table.
+            verificationJpaRepository.deleteByEmail(email); // 인증 테이블에서 인증된 사용자 삭제하기
             LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser));
             return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
         } catch (Exception e) {
@@ -207,9 +207,9 @@ public class UserService {
         }
     }
 
-    // update a user to given user by uuid.
-    // if any given user's field is null,
-    // the matched field of the user is not changed.
+    // uuid로 사용자를 주어진 사용자 정보로 수정하기
+    // 주어진 사용자의 필드 값이 null이라면,
+    // 사용자의 해당 필드는 변경되지 않음
     public StatusCode updateUserByUuid(UUID uuid, MyUser user) {
         Optional<MyUser> _oldUser = userJpaRepository.findByUuid(uuid);
         if (_oldUser.isEmpty())
@@ -222,7 +222,7 @@ public class UserService {
                 user.getPassword() != null)
             return StatusCode.CONNOT_CHANGE_IMPORTANT_INFORMATION;
 
-        // if the field value is not null, change it.
+        // 필드 값이 null이 아니라면 변경하기
         if (user.getEmail() != null)
             oldUser.setEmail(user.getEmail().toLowerCase());
         if (user.getRank() != null)
@@ -238,55 +238,55 @@ public class UserService {
         return StatusCode.NO_ERROR;
     }
 
-    // update user's password by uuid.
+    // uuid로 사용자의 비밀번호 수정하기
     public StatusCode updateUserPasswordByUuid(UUID uuid, OldAndNewPasswordDto passwords) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return StatusCode.NO_USER_FOUND;
         MyUser user = _user.get();
 
-        // only can change password 5 minutes after the last time to change it.
+        // 마지막으로 변경한 시점으로부터 5분이 지나야만 비밀번호를 변경할 수 있음
         if (user.getPasswordChangedAt().isAfter(OffsetDateTimeUtil.getNow().minusMinutes(5)))
             return StatusCode.CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES;
 
-        // check old password is matched
+        // 기존 비밀번호가 일치하는지 확인하기
         String oldPassword = securityUtil.addPepper(passwords.getOldPassword());
         boolean isMatchedPassword = securityConfig.passwordEncoder().matches(oldPassword, user.getPassword());
         if (!isMatchedPassword)
             return StatusCode.PASSWORD_IS_INCURRECT;
 
-        // check if given new password is valid
+        // 주어진 새 비밀번호가 유효한지 확인하기
         boolean isValidPassword = securityUtil.checkValidPassword(passwords.getNewPassword());
         if (!isValidPassword)
             return StatusCode.INVALID_PASSWORD;
 
-        // change the password
+        // 비밀번호 변경하기
         user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
         user = encodeUserPassword(user, passwords.getNewPassword());
         userJpaRepository.save(user);
         return StatusCode.NO_ERROR;
     }
 
-    // send a email to reset password
+    // 비밀번호 초기화 이메일 전송하기
     public StatusCode resetPassword(ResetPasswordDto resetPasswordDto) {
-        // find matched user
+        // 일치하는 사용자 찾기
         Optional<MyUser> _user = userJpaRepository.findByEmail(resetPasswordDto.getEmail().toLowerCase());
         if (_user.isEmpty())
             return StatusCode.NO_USER_FOUND;
         MyUser user = _user.get();
 
-        // check if it is the currect user
+        // 올바른 사용자인지 확인하기
         if (!resetPasswordDto.getName().equals(user.getName()))
             return StatusCode.NO_USER_FOUND;
 
         if (!passwordEncoder.matches(securityUtil.addPepper(resetPasswordDto.getStudentId()), user.getStudentId()))
             return StatusCode.NO_USER_FOUND;
 
-        // only can change password 5 minutes after the last time to change it.
+        // 마지막으로 변경한 시점으로부터 5분이 지나야만 비밀번호를 변경할 수 있음
         if (user.getPasswordChangedAt().isAfter(OffsetDateTimeUtil.getNow().minusMinutes(5)))
             return StatusCode.CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES;
 
-        // make new password
+        // 새 비밀번호 생성하기
         String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String lower = "abcdefghijklmnopqrstuvwxyz";
         String digits = "0123456789";
@@ -294,23 +294,23 @@ public class UserService {
 
         StringBuilder password = new StringBuilder();
 
-        // Add 4 random alphabets (upper/lower)
+        // 무작위 알파벳(대/소문자) 4개 추가하기
         for (int i = 0; i < 4; i++) {
             char c = (Math.random() < 0.5 ? upper : lower).charAt((int) (Math.random() * 26));
             password.append(c);
         }
 
-        // Add 5 random digits
+        // 무작위 숫자 5개 추가하기
         for (int i = 0; i < 5; i++) {
             password.append(digits.charAt((int) (Math.random() * digits.length())));
         }
 
-        // Add 2 random special characters
+        // 무작위 특수문자 2개 추가하기
         for (int i = 0; i < 2; i++) {
             password.append(specials.charAt((int) (Math.random() * specials.length())));
         }
 
-        // Shuffle the password
+        // 비밀번호 섞기
         char[] passwordChars = password.toString().toCharArray();
         for (int i = passwordChars.length - 1; i > 0; i--) {
             int j = (int) (Math.random() * (i + 1));
@@ -320,11 +320,11 @@ public class UserService {
         }
         String newPassword = new String(passwordChars);
 
-        // Encode and update password
+        // 비밀번호 암호화 및 수정하기
         user = encodeUserPassword(user, newPassword);
         userJpaRepository.save(user);
 
-        // send email to report it.
+        // 결과를 알리는 이메일 전송하기
         String messageHeader = "안녕하세요!\n충북대학교 CCC입니다.\n아래와 같이 비밀번호가 초기화되었음을 알려드립니다.";
         String messageCode = "새 비밀번호: " + newPassword;
         String messageFooter = "위 비밀번호를 아무에게도 공개하지 마세요!\n로그인하신 후 즉시 비밀번호를 변경해주세요.\n감사합니다.";
@@ -341,7 +341,7 @@ public class UserService {
                             messageHeader + "\n\n" + messageCode + "\n\n" + messageFooter)
                     .asJson();
 
-            // that the status code is 200 means doing right operation.
+            // 상태 코드가 200이라는 것은 정상적으로 처리됨
             if (request.getStatus() != 200)
                 return StatusCode.SOMETHING_WENT_WRONG;
         } catch (UnirestException e) {
@@ -352,7 +352,7 @@ public class UserService {
         return StatusCode.NO_ERROR;
     }
 
-    // delete a user by uuid.
+    // uuid로 사용자 삭제하기
     public StatusCode deleteUserByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -360,7 +360,7 @@ public class UserService {
 
         MyUser user = _user.get();
         try {
-            deleteProfileImage(uuid); // delete the user's profile as deleted the user.
+            deleteProfileImage(uuid); // 사용자 삭제에 따라 사용자의 프로필 사진 삭제하기
             userJpaRepository.delete(user);
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
@@ -369,20 +369,20 @@ public class UserService {
         }
     }
 
-    // upload user profile image by uuid.
+    // uuid로 사용자 프로필 사진 업로드하기
     public StatusCode uploadProfileImage(MultipartFile file, UUID uuid) {
         try {
-            // extract extension
+            // 확장자 추출하기
             String originalFilename = file.getOriginalFilename();
             String extension = "";
             if (originalFilename != null && originalFilename.contains("."))
                 extension = originalFilename.substring(originalFilename.lastIndexOf("."));
 
-            // set file name
+            // 파일 이름 설정하기
             String fileName = uuid.toString();
             String path = "profile/" + fileName;
 
-            // upload
+            // 업로드하기
             webClient.post()
                     .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
                     .header("Authorization", "Bearer " + supabaseProperties.getKey())
@@ -401,14 +401,14 @@ public class UserService {
         }
     }
 
-    // delete user profile image by uuid.
+    // uuid로 사용자 프로필 사진 삭제하기
     public StatusCode deleteProfileImage(UUID uuid) {
         try {
-            // set file name
+            // 파일 이름 설정하기
             String fileName = uuid.toString();
             String path = "profile/" + fileName;
 
-            // delete
+            // 삭제하기
             webClient.delete()
                     .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
                     .header("Authorization", "Bearer " + supabaseProperties.getKey())

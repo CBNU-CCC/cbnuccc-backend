@@ -47,11 +47,11 @@ public class MissionService {
     }
 
     private void deleteSpecificMissionImage(long id, short imageId) {
-        // set file name
+        // 파일 이름 설정하기
         String fileName = String.format("%d-%d", id, imageId);
         String path = "mission/" + fileName;
 
-        // delete
+        // 삭제하기
         webClient.delete()
                 .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
                 .header("Authorization", "Bearer " + supabaseProperties.getKey())
@@ -61,13 +61,13 @@ public class MissionService {
                 .block();
     }
 
-    // get all missions
+    // 모든 선교 가져오기
     public Page<MissionDto> getAllMissions(Pageable pageable) {
         Page<Mission> missions = missionJpaRepository.findAll(pageable);
         return missions.map(mission -> missionToMissionDto(mission));
     }
 
-    // get a specific mission.
+    // 특정 선교 가져오기
     public DataWithStatusCode<MissionDto> getSpecificMission(long id) {
         Optional<Mission> _mission = missionJpaRepository.findById(id);
         if (_mission.isEmpty())
@@ -76,21 +76,21 @@ public class MissionService {
         return new DataWithStatusCode<>(StatusCode.NO_ERROR, missionToMissionDto(mission));
     }
 
-    // get all my missions
+    // 내 모든 선교 가져오기
     public Page<MissionDto> getAllMyMissions(UUID uuid, Pageable pageable) {
         Page<Mission> missions = missionJpaRepository.findAllByAuthorUuid(uuid, pageable);
         return missions.map(mission -> missionToMissionDto(mission));
     }
 
-    // create a mission
+    // 선교 생성하기
     public DataWithStatusCode<MissionDto> createMission(MissionDto missionDto, UUID uuid) {
-        // find author user.
+        // 작성자 정보 찾기
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return new DataWithStatusCode<>(StatusCode.NO_USER_FOUND, null);
         MyUser user = _user.get();
 
-        // create a mission instance
+        // 선교 인스턴스 생성하기
         Mission mission = new Mission();
         mission.setAuthor(user);
         mission.setCreatedAt(OffsetDateTimeUtil.getNow());
@@ -102,7 +102,7 @@ public class MissionService {
         mission.setImageCount((short) 0);
 
         try {
-            // save it.
+            // 저장하기
             Mission createdMission = missionJpaRepository.save(mission);
             return new DataWithStatusCode<>(StatusCode.NO_ERROR, missionToMissionDto(createdMission));
         } catch (Exception e) {
@@ -111,15 +111,15 @@ public class MissionService {
         }
     }
 
-    // update a mission.
+    // 선교 수정하기
     public StatusCode updateMission(long id, UUID uuid, MissionDto missionDto) {
-        // check existance
+        // 존재 여부 확인하기
         Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
         if (_mission.isEmpty())
             return StatusCode.NO_MISSION_FOUND;
         Mission mission = _mission.get();
 
-        // update mission.
+        // 선교 수정하기
         missionDto.setCreatedAt(OffsetDateTimeUtil.getNow());
         if (missionDto.getSite() != null)
             mission.setSite(missionDto.getSite());
@@ -141,14 +141,14 @@ public class MissionService {
         }
     }
 
-    // delete a mission.
+    // 선교 삭제하기
     public StatusCode deleteMission(long id, UUID uuid) {
         Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
         if (_mission.isEmpty())
             return StatusCode.NO_MISSION_FOUND;
 
         try {
-            deleteAllMissionImages(id, uuid); // delete all #{id} mission images as deleted the mission.
+            deleteAllMissionImages(id, uuid); // 선교 삭제에 따라 #{id} 선교의 모든 이미지 삭제하기
             missionJpaRepository.deleteById(id);
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
@@ -157,37 +157,37 @@ public class MissionService {
         }
     }
 
-    // get all mission author's uuid
+    // 모든 선교의 생성자의 uuid 가져오기
     public Page<UUID> getAllAuthorUuid(Pageable pageable) {
         return missionJpaRepository.findAuthorUuid(pageable);
     }
 
-    // upload mission images.
+    // 선교 사진 올리기
     public StatusCode uploadMissionImages(List<MultipartFile> files, long id, UUID uuid) {
-        // verify auth information to update #{id} mission board.
+        // #{id} 선교 게시글을 수정할 권한 정보 확인하기
         Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
         if (_mission.isEmpty())
             return StatusCode.NO_MISSION_FOUND;
         Mission mission = _mission.get();
 
-        // set mission's image count to 0
+        // 선교의 이미지 개수를 0으로 설정하기
         mission.setImageCount((short) 0);
 
         for (short i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
 
             try {
-                // extract extension
+                // 확장자 추출하기
                 String originalFilename = file.getOriginalFilename();
                 String extension = "";
                 if (originalFilename != null && originalFilename.contains("."))
                     extension = originalFilename.substring(originalFilename.lastIndexOf("."));
 
-                // set file name
+                // 파일 이름 설정하기
                 String fileName = String.format("%d-%d", id, i);
                 String path = "mission/" + fileName;
 
-                // upload it
+                // 업로드하기
                 webClient.post()
                         .uri(supabaseProperties.getUrl() + "/storage/v1/object/" + path)
                         .header("Authorization", "Bearer " + supabaseProperties.getKey())
@@ -216,17 +216,17 @@ public class MissionService {
     }
 
     public StatusCode deleteAllMissionImages(long id, UUID uuid) {
-        // check if #{id} mission is made by user whose uuid is {uuid}
+        // #{id} 선교가 uuid가 {uuid}인 사용자에 의해 생성되었는지 확인하기
         Optional<Mission> _mission = missionJpaRepository.findByIdAndAuthorUuid(id, uuid);
         if (_mission.isEmpty())
             return StatusCode.NO_MISSION_FOUND;
         Mission mission = _mission.get();
 
-        // delete all images
+        // 모든 이미지 삭제하기
         short imageCount = mission.getImageCount();
         for (short i = 0; i < imageCount; i++) {
             try {
-                // delete it
+                // 삭제하기
                 deleteSpecificMissionImage(id, i);
             } catch (Exception e) {
                 LogUtil.printBasicWarnLog(LogHeader.DELETE_MISSION_IMAGE, LogUtil.makeExceptionKV(e));
@@ -234,7 +234,7 @@ public class MissionService {
             }
         }
 
-        // set image_count to 0, because there is no image in the storage.
+        // 스토리지에 이미지가 없으므로 image_count를 0으로 설정하기
         mission.setImageCount((short) 0);
         try {
             missionJpaRepository.save(mission);

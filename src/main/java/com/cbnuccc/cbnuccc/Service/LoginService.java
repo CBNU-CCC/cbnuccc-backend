@@ -35,12 +35,12 @@ public class LoginService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final LoginJpaRepository loginJpaRepository;
 
-    // create a jwt token.
+    // jwt 토큰 생성하기
     private String createToken(Authentication auth, String email, boolean rememberMe) {
         MyUser user = userJpaRepository.findByEmail(email.toLowerCase()).get();
 
-        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 7 d = 604800000 ms/d (7 days)
-        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 1 d = 86400000 ms/d (1 day)
+        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 7 d = 604800000 ms/d (7일)
+        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 1 d = 86400000 ms/d (1일)
         int expirationMillis = rememberMe ? 604800000 : 86400000;
         String jwt = Jwts.builder()
                 .claim("uuid", user.getUuid())
@@ -55,8 +55,8 @@ public class LoginService {
         return jwt;
     }
 
-    // delete all useless tuples by 10 minutes.
-    // 1000 ms/s * 60 s/min * 10 min = 600000 (10 min)
+    // 10분마다 불필요한 모든 튜플 삭제하기
+    // 1000 ms/s * 60 s/min * 10 min = 600000 (10분)
     @Scheduled(fixedRate = 1000 * 60 * 10)
     @Transactional
     public void deleteAllUselessTupleByLastLoginAt() {
@@ -68,7 +68,7 @@ public class LoginService {
                     LogUtil.makeCountKV((int) countDeletedRows));
     }
 
-    // check login-able
+    // 로그인 가능 여부 확인하기
     public boolean checkLoginable(String email, String ip) {
         Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email.toLowerCase(), ip);
         if (_loginRecord.isEmpty())
@@ -84,7 +84,7 @@ public class LoginService {
     }
 
     public StatusCode recordLoginFailure(String email, String ip) {
-        // find a login record by email and ip to update it or create it.
+        // 이메일과 ip로 로그인 기록을 찾아 수정하거나 생성하기
         Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email.toLowerCase(), ip);
 
         Login loginRecord = new Login();
@@ -92,23 +92,23 @@ public class LoginService {
         loginRecord.setEmail(email.toLowerCase());
         loginRecord.setIp(ip);
 
-        // if id exists, then use it to update.
+        // id가 존재한다면, 이를 사용하여 수정하기
         if (_loginRecord.isPresent())
             loginRecord = _loginRecord.get();
 
         short attempt = (short) (loginRecord.getAttempt() + 1);
-        // if attempt is (over) 5 and current time is not more 10 minutes
-        // after the last login time, then make the email and ip locked.
+        // 시도 횟수가 5회 이상이고 현재 시간이 마지막 로그인 시간으로부터
+        // 10분 이상 지나지 않았다면, 이메일과 ip를 잠금 처리하기
         if (attempt >= 5) {
             attempt = 5;
             if (loginRecord.getLastLoginAt().isBefore(OffsetDateTimeUtil.getNow().minusMinutes(10))) {
-                // this function runs when login fails.
-                // clear attempts to 1.
+                // 이 함수는 로그인이 실패했을 때 실행됩니다.
+                // 시도 횟수를 1로 초기화하기
                 attempt = 1;
             }
         }
 
-        // set last time of logging in now and attempt
+        // 마지막 로그인 시간을 현재로, 시도 횟수를 설정하기
         loginRecord.setLastLoginAt(OffsetDateTimeUtil.getNow());
         loginRecord.setAttempt(attempt);
 
@@ -125,13 +125,13 @@ public class LoginService {
         return StatusCode.NO_ERROR;
     }
 
-    // process login
+    // 로그인 처리하기
     public TokenDto login(String email, String password, boolean rememberMe, String ip) {
-        // check the email and the ip
+        // 이메일과 ip 확인하기
         if (!checkLoginable(email.toLowerCase(), ip))
             return null;
 
-        // create user's token
+        // 사용자의 토큰 생성하기
         String pepperedPassword = securityUtil.addPepper(password);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 email.toLowerCase(), pepperedPassword);
@@ -139,12 +139,12 @@ public class LoginService {
         try {
             auth = authenticationManagerBuilder.getObject().authenticate(authToken);
         } catch (AuthenticationException e) {
-            // print warn log about failing to login
+            // 로그인 실패에 대한 경고 로그 출력하기
             LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeEmailKV(email), LogUtil.makeExceptionKV(e));
             return null;
         }
 
-        // find a login record by email and ip to delete it.
+        // 이메일과 ip로 로그인 기록을 찾아 삭제하기
         Optional<Login> _loginRecord = loginJpaRepository.findByEmailAndIp(email, ip);
         if (_loginRecord.isPresent()) {
             try {
