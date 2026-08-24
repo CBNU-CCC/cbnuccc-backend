@@ -28,5 +28,5 @@ public class StcTopic {
     @Column(name = "topic_number")
     private Short topicNumber;
 
-    private Boolean completion;
+    private Short completion;
 }

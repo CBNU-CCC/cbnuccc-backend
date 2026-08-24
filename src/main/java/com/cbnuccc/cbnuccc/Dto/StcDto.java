@@ -19,7 +19,7 @@ public class StcDto {
     private LocalDate recordDate;
 
     // 인덱스 + 1이 항목 번호(topic_number)에 대응하는 이수 여부 목록
-    private List<Boolean> topics;
+    private List<Short> topics;
 
     @Nullable
     private String comment;
