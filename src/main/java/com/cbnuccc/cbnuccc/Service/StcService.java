@@ -48,8 +48,8 @@ public class StcService {
     private StcDto stcToStcDto(Stc stc) {
         UUID authorUuid = stc.getAuthor().getUuid(); // 작성자의 uuid 가져오기
 
-        // stc_topic 테이블에 흩어진 항목별 이수 여부를 하나의 bool 리스트로 합치기 (테이블 분리를 감춤)
-        List<Boolean> topics = stc.getTopics().stream()
+        // stc_topic 테이블에 흩어진 항목별 이수 여부를 하나의 short 리스트로 합치기 (테이블 분리를 감춤)
+        List<Short> topics = stc.getTopics().stream()
                 .map(stcTopic -> stcTopic.getCompletion())
                 .collect(Collectors.toList());
 
@@ -93,7 +93,7 @@ public class StcService {
         stc.setComment(stcDto.getComment());
 
         // 리스트의 인덱스 + 1을 항목 번호로 하여 stc_topic 행 생성하기
-        List<Boolean> completions = stcDto.getTopics();
+        List<Short> completions = stcDto.getTopics();
         List<StcTopic> topics = new ArrayList<>();
         for (int i = 0; i < completions.size(); i++) {
             StcTopic topic = new StcTopic();
@@ -162,8 +162,9 @@ public class StcService {
                     for (short topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
                         userHeaderRow.createCell(2 + topicNumber)
                                 .setCellValue(
-                                        stcTopicJpaRepository.countByStcAuthorUuidAndTopicNumberAndCompletionTrue(
-                                                authorUuid, topicNumber));
+                                        stcTopicJpaRepository
+                                                .countByStcAuthorUuidAndTopicNumberAndCompletionGreaterThanEqual(
+                                                        authorUuid, topicNumber, (short) 1));
                     }
 
                     // stc 활동에 따른 추가 행 삽입
@@ -172,7 +173,7 @@ public class StcService {
                         Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(authorUuid, date);
 
                         // 값 기록 안 했다면 FALSE로 간주
-                        Map<Short, Boolean> completionByTopicNumber = Map.of();
+                        Map<Short, Short> completionByTopicNumber = Map.of();
                         String comment = "";
                         if (_stc.isPresent()) {
                             Stc stc = _stc.get();
@@ -204,10 +205,10 @@ public class StcService {
                         r.createCell(2).setCellValue(date.toString());
 
                         for (short topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
-                            boolean completion = completionByTopicNumber.getOrDefault(topicNumber, false);
+                            short completion = completionByTopicNumber.getOrDefault(topicNumber, (short) 0);
                             Cell topicCell = r.createCell(2 + topicNumber);
                             topicCell.setCellValue(completion);
-                            topicCell.setCellStyle(completion ? trueStyle : falseStyle);
+                            topicCell.setCellStyle(completion >= 1 ? trueStyle : falseStyle);
                         }
 
                         r.createCell(commentColumnIndex).setCellValue(comment);
