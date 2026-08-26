@@ -40,6 +40,8 @@ public class SecurityUtil {
             new ExcludePath(HttpMethod.GET, "/email-duplication"),
             new ExcludePath(HttpMethod.POST, "/user"),
             new ExcludePath(HttpMethod.POST, "/login"),
+            new ExcludePath(HttpMethod.POST, "/refresh"),
+            new ExcludePath(HttpMethod.POST, "/logout"),
             new ExcludePath(HttpMethod.POST, "/verification"),
             new ExcludePath(HttpMethod.POST, "/verification/confirmation"),
             new ExcludePath(HttpMethod.PATCH, "/reset-password"),
