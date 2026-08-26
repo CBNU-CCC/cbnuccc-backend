@@ -57,7 +57,7 @@ public class LoginController {
         // 로그인
         String ip = SecurityUtil.getClientIp(request);
         String email = data.getEmail().toLowerCase();
-        TokenDto tokenDto = loginService.login(email, data.getPassword(), data.getRememberMe(), ip);
+        TokenDto tokenDto = loginService.login(email, data.getPassword(), ip);
         if (tokenDto == null) {
             // 예외 상황 처리
             StatusCode code = loginService.recordLoginFailure(email, ip);

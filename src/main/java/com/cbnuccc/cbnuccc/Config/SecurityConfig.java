@@ -25,6 +25,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf((csrf) -> csrf.disable());
         http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        // Spring Security의 기본 "/logout" 처리(세션 기반 리다이렉트)를 비활성화하고
+        // RefreshController의 커스텀 "/logout" 엔드포인트가 요청을 처리하도록 함
+        http.logout((logout) -> logout.disable());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.authorizeHttpRequests(auth -> {

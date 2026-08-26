@@ -34,7 +34,10 @@ public enum LogHeader {
     RESET_PASSWORD,
     CREATE_STC,
     GET_STC,
-    DOWNLOAD_STC;
+    DOWNLOAD_STC,
+    REFRESH_TOKEN,
+    LOGOUT,
+    SCHEDULED_DELETE_EXPIRED_REFRESH_TOKEN;
 
     @Getter
     private final String header;

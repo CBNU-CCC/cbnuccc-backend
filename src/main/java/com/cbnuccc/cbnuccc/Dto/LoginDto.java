@@ -19,10 +19,4 @@ public class LoginDto {
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     private String password;
-
-    @Schema(
-        description="로그인 유지 여부",
-        defaultValue="false"
-    )
-    private Boolean rememberMe = false;
 }
