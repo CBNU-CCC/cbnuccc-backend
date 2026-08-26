@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
@@ -34,21 +33,20 @@ public class LoginService {
     private final SecurityUtil securityUtil;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final LoginJpaRepository loginJpaRepository;
+    private final RefreshTokenService refreshTokenService;
 
-    // jwt 토큰 생성하기
-    private String createToken(Authentication auth, String email, boolean rememberMe) {
-        MyUser user = userJpaRepository.findByEmail(email.toLowerCase()).get();
+    // 1000 ms/s * 60 s/min * 60 min/h * 1 h = 3600000 ms (1시간)
+    private static final long ACCESS_TOKEN_EXPIRATION_MILLIS = 3600000L;
 
-        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 7 d = 604800000 ms/d (7일)
-        // 1000 ms/s * 60 s/min * 60 min/h * 24 h/d * 1 d = 86400000 ms/d (1일)
-        int expirationMillis = rememberMe ? 604800000 : 86400000;
+    // access token(jwt) 생성하기
+    public String createAccessToken(MyUser user) {
         String jwt = Jwts.builder()
                 .claim("uuid", user.getUuid())
                 .claim("name", user.getName())
                 .claim("sex", user.getSex().toString())
                 .claim("rank", user.getRank().toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expirationMillis))
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_MILLIS))
                 .signWith(securityUtil.getJwtKey())
                 .compact();
 
@@ -126,7 +124,7 @@ public class LoginService {
     }
 
     // 로그인 처리하기
-    public TokenDto login(String email, String password, boolean rememberMe, String ip) {
+    public TokenDto login(String email, String password, String ip) {
         // 이메일과 ip 확인하기
         if (!checkLoginable(email.toLowerCase(), ip))
             return null;
@@ -135,9 +133,8 @@ public class LoginService {
         String pepperedPassword = securityUtil.addPepper(password);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 email.toLowerCase(), pepperedPassword);
-        Authentication auth = null;
         try {
-            auth = authenticationManagerBuilder.getObject().authenticate(authToken);
+            authenticationManagerBuilder.getObject().authenticate(authToken);
         } catch (AuthenticationException e) {
             // 로그인 실패에 대한 경고 로그 출력하기
             LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeEmailKV(email), LogUtil.makeExceptionKV(e));
@@ -155,8 +152,10 @@ public class LoginService {
             }
         }
 
-        String token = createToken(auth, email, rememberMe);
-        TokenDto tokenDto = new TokenDto(token);
+        MyUser user = userJpaRepository.findByEmail(email.toLowerCase()).get();
+        String token = createAccessToken(user);
+        String refreshToken = refreshTokenService.issueRefreshToken(user.getId());
+        TokenDto tokenDto = new TokenDto(token, refreshToken);
 
         return tokenDto;
     }

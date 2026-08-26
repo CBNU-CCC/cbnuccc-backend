@@ -9,4 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @AllArgsConstructor
 public class TokenDto {
     private String token;
+
+    private String refreshToken;
 }
