@@ -63,13 +63,20 @@ public class VerificationService {
         return false;
     }
 
-    // 1분마다 만료된 모든 튜플 삭제하기
-    // 1000 ms/s * 60 s/min = 60000 ms/min (1분)
+    // 1000 ms/s * 60 s/min = 60000 ms/min (1분)마다 인증 안 되고 만료된 튜플 삭제 및 오래된 튜플 삭제
     @Scheduled(fixedRate = 1000 * 60)
     @Transactional
     public void deleteAllExpiredEmails() {
+        // 1분마다 만료된 모든 튜플 삭제하기
         long countDeletedRows = verificationJpaRepository
                 .deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTimeUtil.getNow());
+
+        if (countDeletedRows != 0)
+            LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_VERIFICATION_RECORD,
+                    LogUtil.makeCountKV((int) countDeletedRows));
+
+        // 1분마다 너무 오래된(2시간) 모든 튜플 삭제하기
+        countDeletedRows = verificationJpaRepository.deleteByExpireAtBefore(OffsetDateTimeUtil.getNow().minusHours(2));
 
         if (countDeletedRows != 0)
             LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_VERIFICATION_RECORD,
