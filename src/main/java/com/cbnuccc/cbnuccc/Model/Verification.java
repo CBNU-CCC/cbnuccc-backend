@@ -27,4 +27,6 @@ public class Verification {
     private String code;
 
     private Boolean isVerified;
+
+    private OffsetDateTime rerequestableAt;
 }
