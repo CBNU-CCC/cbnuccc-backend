@@ -48,13 +48,35 @@ public class VerificationService {
         return false;
     }
 
-    // 1분마다 만료된 모든 튜플 삭제하기
-    // 1000 ms/s * 60 s/min = 60000 ms/min (1분)
+    // 재요청 가능하다면 true를 반환
+    // 그렇지 않다면 false를 반환
+    // 또한, 요청의 이메일이 DB에 없다면 true를 반환
+    private boolean checkRerequestableEmailRequest(String email) {
+        Optional<Verification> _verification = verificationJpaRepository.findByEmail(email.toLowerCase());
+        if (_verification.isEmpty())
+            return true;
+
+        Verification verification = _verification.get();
+        if (verification.getRerequestableAt().isBefore(OffsetDateTimeUtil.getNow()))
+            return true; // 재요청 가능
+
+        return false;
+    }
+
+    // 1000 ms/s * 60 s/min = 60000 ms/min (1분)마다 인증 안 되고 만료된 튜플 삭제 및 오래된 튜플 삭제
     @Scheduled(fixedRate = 1000 * 60)
     @Transactional
     public void deleteAllExpiredEmails() {
+        // 1분마다 만료된 모든 튜플 삭제하기
         long countDeletedRows = verificationJpaRepository
                 .deleteByExpireAtBeforeAndIsVerifiedFalse(OffsetDateTimeUtil.getNow());
+
+        if (countDeletedRows != 0)
+            LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_VERIFICATION_RECORD,
+                    LogUtil.makeCountKV((int) countDeletedRows));
+
+        // 1분마다 너무 오래된(2시간) 모든 튜플 삭제하기
+        countDeletedRows = verificationJpaRepository.deleteByExpireAtBefore(OffsetDateTimeUtil.getNow().minusHours(2));
 
         if (countDeletedRows != 0)
             LogUtil.printBasicInfoLog(LogHeader.SCHEDULED_DELETE_VERIFICATION_RECORD,
@@ -76,9 +98,9 @@ public class VerificationService {
         // 마지막 전송 5분 후에 실행되는지 확인하기
         // 그렇지 않다면 실행하지 않아야 함
 
-        if (!checkExpiredEmailRequest(to)) {
-            // DB에 정상적으로 존재하며 만료되지 않음
-            return StatusCode.CANNOT_SEND_EMAIL_WITHIN_5_MINUTES;
+        if (!checkRerequestableEmailRequest(to)) {
+            // DB에 정상적으로 존재하며 재요청 가능
+            return StatusCode.CANNOT_SEND_EMAIL_WITHIN_10_SECONDS;
         }
 
         // 인증 이메일 전송하기
@@ -123,6 +145,7 @@ public class VerificationService {
             }
 
             verification.setExpireAt(OffsetDateTimeUtil.getNow().plusMinutes(5));
+            verification.setRerequestableAt(OffsetDateTimeUtil.getNow().plusSeconds(10));
             verification.setCode(passwordEncoder.encode(securityUtil.addPepper(code)));
             verification.setIsVerified(false);
 
