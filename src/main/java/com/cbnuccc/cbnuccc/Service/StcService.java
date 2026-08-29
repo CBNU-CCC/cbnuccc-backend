@@ -163,8 +163,8 @@ public class StcService {
                         userHeaderRow.createCell(2 + topicNumber)
                                 .setCellValue(
                                         stcTopicJpaRepository
-                                                .countByStcAuthorUuidAndTopicNumberAndCompletionGreaterThanEqual(
-                                                        authorUuid, topicNumber, (short) 1));
+                                                .sumCompletionByStcAuthorUuidAndTopicNumber(
+                                                        authorUuid, topicNumber));
                     }
 
                     // stc 활동에 따른 추가 행 삽입
