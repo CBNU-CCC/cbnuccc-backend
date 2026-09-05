@@ -19,8 +19,10 @@ import com.cbnuccc.cbnuccc.Config.SupabaseProperties;
 import com.cbnuccc.cbnuccc.Dto.LimitedUserDto;
 import com.cbnuccc.cbnuccc.Dto.OldAndNewPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.ResetPasswordDto;
+import com.cbnuccc.cbnuccc.Dto.ReviewSoonInfoDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
+import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.MissionJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.PrayerJpaRepository;
@@ -55,6 +57,8 @@ public class UserService {
     private final MailgunProperties mailgunProperties;
 
     // User를 UserDto로 변환하기
+    // 세션이 열려 있는 동안(트랜잭션 내부) 호출해야 함 - lazy 로딩되는 affiliatedReviewSoon을
+    // 프록시 상태 그대로 DTO에 담으면 세션 종료 후 직렬화 시점에 LazyInitializationException 발생
     private UserDto userToUserDto(MyUser user) {
         return new UserDto(
                 user.getUuid(),
@@ -64,7 +68,15 @@ public class UserService {
                 user.getName(),
                 user.getGrade(),
                 prayerJpaRepository.countByAuthorUuid(user.getUuid()),
-                missionJpaRepository.countByAuthorUuid(user.getUuid()));
+                missionJpaRepository.countByAuthorUuid(user.getUuid()),
+                reviewSoonInfoToDto(user.getAffiliatedReviewSoon()));
+    }
+
+    // ReviewSoonInfo를 ReviewSoonInfoDto로 변환하기
+    private ReviewSoonInfoDto reviewSoonInfoToDto(ReviewSoonInfo reviewSoonInfo) {
+        if (reviewSoonInfo == null)
+            return null;
+        return new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName());
     }
 
     // UserDto를 User로 변환하기
@@ -87,7 +99,8 @@ public class UserService {
                 userDto.getName(),
                 userDto.getGrade(),
                 userDto.getPrayerCount(),
-                userDto.getMissionCount());
+                userDto.getMissionCount(),
+                userDto.getAffiliatedReviewSoon());
         return dto;
     }
 
@@ -133,6 +146,7 @@ public class UserService {
     }
 
     // 주어진 uuid로 UserDto 찾기
+    @Transactional
     public Optional<UserDto> findUserDtoByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -142,6 +156,7 @@ public class UserService {
     }
 
     // 주어진 이메일로 UserDto 찾기
+    @Transactional
     public Optional<UserDto> findUserDtoByEmail(String email) {
         Optional<MyUser> _user = userJpaRepository.findByEmail(email.toLowerCase());
         if (_user.isEmpty())
@@ -151,6 +166,7 @@ public class UserService {
     }
 
     // 주어진 uuid로 LimitedUserDto 찾기
+    @Transactional
     public Optional<LimitedUserDto> findLimitedUserDtoByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -160,6 +176,7 @@ public class UserService {
     }
 
     // 주어진 UserDto와 일치하는 모든 사용자 찾기
+    @Transactional
     public Page<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser, Pageable pageable) {
         // LimitedUserDto를 User로 변환하기
         MyUser example = userDtoToUser(limitedUserDtoToUserDto(exampleUser));
