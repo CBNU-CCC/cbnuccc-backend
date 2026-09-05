@@ -24,6 +24,6 @@ public class ReviewSoon {
     private MyUser id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "affiliated_family_soon")
-    private ReviewSoonInfo affiliatedFamilySoon;
+    @JoinColumn(name = "affiliated_review_soon")
+    private ReviewSoonInfo affiliatedReviewSoon;
 }
