@@ -227,6 +227,7 @@ public class UserService {
     // uuid로 사용자를 주어진 사용자 정보로 수정하기
     // 주어진 사용자의 필드 값이 null이라면,
     // 사용자의 해당 필드는 변경되지 않음
+    @Transactional
     public StatusCode updateUserByUuid(UUID uuid, MyUser user) {
         Optional<MyUser> _oldUser = userJpaRepository.findByUuid(uuid);
         if (_oldUser.isEmpty())
@@ -256,6 +257,7 @@ public class UserService {
     }
 
     // uuid로 사용자의 비밀번호 수정하기
+    @Transactional
     public StatusCode updateUserPasswordByUuid(UUID uuid, OldAndNewPasswordDto passwords) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
@@ -285,6 +287,7 @@ public class UserService {
     }
 
     // 비밀번호 초기화 이메일 전송하기
+    @Transactional
     public StatusCode resetPassword(ResetPasswordDto resetPasswordDto) {
         // 일치하는 사용자 찾기
         Optional<MyUser> _user = userJpaRepository.findByEmail(resetPasswordDto.getEmail().toLowerCase());
@@ -370,6 +373,7 @@ public class UserService {
     }
 
     // uuid로 사용자 삭제하기
+    @Transactional
     public StatusCode deleteUserByUuid(UUID uuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
