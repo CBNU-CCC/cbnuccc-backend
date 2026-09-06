@@ -21,6 +21,13 @@ public class StcDto {
     // 인덱스 + 1이 항목 번호(topic_number)에 대응하는 이수 여부 목록
     private List<Short> topics;
 
+    // TODO: 기능 개발 완료 후 삭제 요망
     @Nullable
     private String comment;
+
+    @Nullable
+    private String weeklyLife;
+
+    @Nullable
+    private String prayerRequest;
 }

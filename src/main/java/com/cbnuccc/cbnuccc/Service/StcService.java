@@ -58,7 +58,9 @@ public class StcService {
                 authorUuid,
                 stc.getRecordDate(),
                 topics,
-                stc.getComment());
+                stc.getComment(),
+                stc.getWeeklyLife(),
+                stc.getPrayerRequest());
     }
 
     // 내 모든 STC 정보 가져오기
@@ -91,6 +93,8 @@ public class StcService {
         stc.setAuthor(user);
         stc.setRecordDate(stcDto.getRecordDate());
         stc.setComment(stcDto.getComment());
+        stc.setWeeklyLife(stcDto.getWeeklyLife());
+        stc.setPrayerRequest(stcDto.getPrayerRequest());
 
         // 리스트의 인덱스 + 1을 항목 번호로 하여 stc_topic 행 생성하기
         List<Short> completions = stcDto.getTopics();
@@ -123,7 +127,8 @@ public class StcService {
 
             // 현재 존재하는 항목 개수 (항목 열은 이 개수만큼 동적으로 생성됨)
             int topicCount = stcTopicJpaRepository.findMaxTopicNumber().orElse((short) 0);
-            int commentColumnIndex = 3 + topicCount;
+            int weeklyLifeColumnIndex = 3 + topicCount;
+            int prayerRequestColumnIndex = weeklyLifeColumnIndex + 1;
 
             // 학년별 시트 생성
             for (short grade = 1; grade <= 5; grade++) {
@@ -137,7 +142,8 @@ public class StcService {
                 for (int topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
                     headerRow.createCell(2 + topicNumber).setCellValue("항목" + topicNumber);
                 }
-                headerRow.createCell(commentColumnIndex).setCellValue("의견");
+                headerRow.createCell(weeklyLifeColumnIndex).setCellValue("일주일의 삶");
+                headerRow.createCell(prayerRequestColumnIndex).setCellValue("기도제목");
 
                 // 데이터 행 생성
                 int rowNumber = 1;
@@ -174,16 +180,18 @@ public class StcService {
 
                         // 값 기록 안 했다면 FALSE로 간주
                         Map<Short, Short> completionByTopicNumber = Map.of();
-                        String comment = "";
+                        String weeklyLife = "", prayerRequest = "";
                         if (_stc.isPresent()) {
                             Stc stc = _stc.get();
                             completionByTopicNumber = stc.getTopics().stream()
                                     .collect(Collectors.toMap(stcTopic -> stcTopic.getTopicNumber(),
                                             stcTopic -> stcTopic.getCompletion()));
 
-                            // 의견 존재하면 병기
-                            String _comment = stc.getComment();
-                            comment = _comment == null ? "" : _comment;
+                            // 일주읠 삶과 기도제목 존재하면 병기
+                            String _weeklyLife = stc.getWeeklyLife();
+                            weeklyLife = _weeklyLife == null ? "" : _weeklyLife;
+                            String _prayerRequest = stc.getPrayerRequest();
+                            prayerRequest = _prayerRequest == null ? "" : _prayerRequest;
                         }
 
                         // TRUE / FLASE 색깔 스타일 입히기
@@ -211,11 +219,14 @@ public class StcService {
                             topicCell.setCellStyle(completion >= 1 ? trueStyle : falseStyle);
                         }
 
-                        r.createCell(commentColumnIndex).setCellValue(comment);
+                        r.createCell(weeklyLifeColumnIndex).setCellValue(weeklyLife);
+                        r.createCell(prayerRequestColumnIndex).setCellValue(prayerRequest);
                     }
                 }
 
                 sheet.autoSizeColumn(2); // 기록일 컬럼에 대해 크기 조정
+                sheet.autoSizeColumn(weeklyLifeColumnIndex); // 일주일 삶 컬럼에 대해 크기 조정
+                sheet.autoSizeColumn(prayerRequestColumnIndex); // 기도제목 컬럼에 대해 크기 조정
             }
 
             // HTTP 응답 설정
