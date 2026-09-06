@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cbnuccc.cbnuccc.Dto.ReviewDto;
 import com.cbnuccc.cbnuccc.Dto.StcDto;
+import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Service.StcService;
 import com.cbnuccc.cbnuccc.Service.UserService;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
@@ -72,6 +75,37 @@ public class StcController {
 
         LogUtil.printBasicInfoLog(LogHeader.CREATE_STC, LogUtil.makeIdKV(result.data().getId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
+    }
+
+    // 리뷰 작성
+    @PostMapping("/stc/review")
+    public ResponseEntity<?> createReview(Authentication authentication, @RequestBody ReviewDto reviewDto) {
+        // 본인(점검 순장)의 uuid 추출
+        UUID uuid = userService.getUuidFromAuth(authentication);
+
+        // 점검 순장의 점검 한 마디를 받을 사용자 추출
+        Optional<UserDto> _user = userService.findUserDtoByUuid(reviewDto.getTo());
+        if (_user.isEmpty())
+            return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
+        UserDto user = _user.get();
+
+        // 주어진 사용자(to)의 점검순의 점검 순장(대표)가 본인인지 확인
+        boolean isRepresentative = stcService.isReviewSoonRepresentativeOf(uuid, user.getAffiliatedReviewSoon());
+        if (!isRepresentative) {
+            // 점검 순장이 아님
+            LogUtil.printBasicWarnLog(LogHeader.CREATE_REVIEW_STC,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.INVALID_SOON_REPRESENTATIVE));
+            return StatusCode.INVALID_SOON_REPRESENTATIVE.makeErrorResponseEntity();
+        }
+
+        // 인증됨 -> 점검 메시지 생성
+        StatusCode code = stcService.createMessageToReviewSoonPerson(reviewDto.getTo(), reviewDto.getRecordDate(),
+                reviewDto.getMessage());
+        if (code.checkIsError())
+            LogUtil.printBasicWarnLog(LogHeader.CREATE_REVIEW_STC, LogUtil.makeStatusCodeMessageKV(code));
+        else
+            LogUtil.printBasicInfoLog(LogHeader.CREATE_REVIEW_STC);
+        return code.makeErrorResponseEntity();
     }
 
     // STC 정보 엑셀로 내려받기

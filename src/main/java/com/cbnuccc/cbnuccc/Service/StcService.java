@@ -109,7 +109,7 @@ public class StcService {
 
         // 일치하는지 확인 후 boolean 값 반환
         ReviewSoonInfo reviewSoonInfo = _reviewSoonInfo.get();
-        return reviewSoonInfo.getRepresentative().getUuid() == uuid;
+        return reviewSoonInfo.getRepresentative().getUuid().equals(uuid);
     }
 
     // 점검순 인원에 대한 점검 한 마디 작성
