@@ -21,10 +21,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import com.cbnuccc.cbnuccc.Dto.ReviewSoonInfoDto;
 import com.cbnuccc.cbnuccc.Dto.StcDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
+import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Stc;
 import com.cbnuccc.cbnuccc.Model.StcTopic;
+import com.cbnuccc.cbnuccc.Repository.ReviewSoonInfoJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.StcJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.StcTopicJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
@@ -43,6 +47,7 @@ public class StcService {
     private final UserJpaRepository userJpaRepository;
     private final StcJpaRepository stcJpaRepository;
     private final StcTopicJpaRepository stcTopicJpaRepository;
+    private final ReviewSoonInfoJpaRepository reviewSoonInfoJpaRepository;
 
     // Stc를 StcDto로 변환하기
     private StcDto stcToStcDto(Stc stc) {
@@ -60,7 +65,8 @@ public class StcService {
                 topics,
                 stc.getComment(),
                 stc.getWeeklyLife(),
-                stc.getPrayerRequest());
+                stc.getPrayerRequest(),
+                stc.getReview());
     }
 
     // 내 모든 STC 정보 가져오기
@@ -77,6 +83,50 @@ public class StcService {
         if (_stc.isEmpty())
             return new DataWithStatusCode<>(StatusCode.NO_STC_FOUND, null);
         return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(_stc.get()));
+    }
+
+    // 특정인 및 특정일의 STC 정보 조회
+    @Transactional
+    public DataWithStatusCode<StcDto> getSpecificStc(UUID uuid, LocalDate recordDate) {
+        // stc 정보 조회
+        Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(uuid, recordDate);
+        if (_stc.isEmpty())
+            return new DataWithStatusCode<>(StatusCode.NO_STC_FOUND, null);
+        Stc stc = _stc.get();
+
+        // 변환 후 반환
+        StcDto stcDto = stcToStcDto(stc);
+        return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcDto);
+    }
+
+    // 주어진 uuid의 사용자가 주어진 점검순의 대표이면 true, 아니면 false
+    // 단, 점검순이 존재하지 않는 경우 false
+    @Transactional
+    public boolean isReviewSoonLeaderOf(UUID uuid, ReviewSoonInfoDto reviewSoon) {
+        Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(reviewSoon.getId());
+        if (_reviewSoonInfo.isEmpty())
+            return false;
+
+        // 일치하는지 확인 후 boolean 값 반환
+        ReviewSoonInfo reviewSoonInfo = _reviewSoonInfo.get();
+        return reviewSoonInfo.getRepresentative().getUuid() == uuid;
+    }
+
+    // 점검순 인원에 대한 점검 한 마디 작성
+    @Transactional
+    public StatusCode createMessageToReviewSoonPerson(UUID to, LocalDate recordDate, String message) {
+        // stc 정보 조회
+        Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(to, recordDate);
+        if (_stc.isEmpty())
+            return StatusCode.NO_STC_FOUND;
+        Stc stc = _stc.get();
+
+        // 점검 메시지 작성
+        stc.setReview(message);
+
+        // 저장
+        stcJpaRepository.save(stc);
+        return StatusCode.NO_ERROR;
     }
 
     // STC 정보 생성하기

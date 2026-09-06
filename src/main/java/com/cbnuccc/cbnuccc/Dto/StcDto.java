@@ -30,4 +30,8 @@ public class StcDto {
 
     @Nullable
     private String prayerRequest;
+
+    // 점검 순장님이 입력하는 메세지
+    @Nullable
+    private String review;
 }
