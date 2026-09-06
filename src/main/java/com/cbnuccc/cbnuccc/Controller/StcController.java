@@ -78,5 +78,6 @@ public class StcController {
     @GetMapping("/stc/excel")
     public void downloadExcel(HttpServletResponse response) {
         stcService.downloadStc(response);
+        LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC);
     }
 }
