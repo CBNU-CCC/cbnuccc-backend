@@ -293,4 +293,36 @@ public class StcService {
             LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
         }
     }
+
+    @Transactional
+    public DataWithStatusCode<ReviewSoonInfoDto> getAffiliatedReviewSoon(UUID uuid) {
+        Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
+        if (_user.isEmpty()) {
+            LogUtil.printBasicWarnLog(LogHeader.GET_REVIEW_SOON,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
+            return new DataWithStatusCode<>(StatusCode.NO_USER_FOUND, null);
+        }
+        MyUser user = _user.get();
+        ReviewSoonInfo reviewSoonInfo = user.getAffiliatedReviewSoon();
+        if (reviewSoonInfo == null) {
+            LogUtil.printBasicWarnLog(LogHeader.GET_REVIEW_SOON,
+                    LogUtil.makeStatusCodeMessageKV(StatusCode.NO_REVIEW_SOON_FOUND));
+            return new DataWithStatusCode<>(StatusCode.NO_REVIEW_SOON_FOUND, null);
+        }
+
+        return new DataWithStatusCode<>(StatusCode.NO_ERROR,
+                new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName()));
+    }
+
+    // 본인이 소속된 모든 사용자의 uuid 반환
+    @Transactional
+    public Page<UUID> getAllUsersWhoBelongToAffiliatedReviewSoon(UUID me, Pageable pageable) {
+        DataWithStatusCode<ReviewSoonInfoDto> reviewSoonInfo = getAffiliatedReviewSoon(me);
+        if (reviewSoonInfo.code().checkIsError())
+            return Page.empty(); // 소속된 순에 이상이 있을 경우 없는 페이지 리턴
+
+        Page<UUID> uuids = userJpaRepository.findAllAffiliatedReviewSoonUsersUuid(reviewSoonInfo.data().getId(),
+                pageable);
+        return uuids;
+    }
 }

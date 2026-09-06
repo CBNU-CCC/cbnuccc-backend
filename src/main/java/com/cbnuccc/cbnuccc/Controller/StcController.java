@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cbnuccc.cbnuccc.Dto.ReviewDto;
+import com.cbnuccc.cbnuccc.Dto.ReviewSoonInfoDto;
 import com.cbnuccc.cbnuccc.Dto.StcDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Service.StcService;
@@ -113,5 +114,29 @@ public class StcController {
     public void downloadExcel(HttpServletResponse response) {
         stcService.downloadStc(response);
         LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC);
+    }
+
+    // 현재 소속된 점검순 반환하기
+    @GetMapping("/stc/review-soon")
+    public ResponseEntity<?> getAffiliatedReviewSoon(Authentication authentication) {
+        // 현재 사용자 정보 가져오기
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        DataWithStatusCode<ReviewSoonInfoDto> reviewSoonInfo = stcService.getAffiliatedReviewSoon(uuid);
+        if (reviewSoonInfo.code().checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.GET_REVIEW_SOON, LogUtil.makeStatusCodeMessageKV(
+                    reviewSoonInfo.code()));
+            return reviewSoonInfo.code().makeErrorResponseEntity();
+        }
+
+        // 현재 점검순 정보 반환
+        return ResponseEntity.ok(reviewSoonInfo.data());
+    }
+
+    // 본인이 소속된 점검순에 소속된 모든 사용자 반환하기
+    @GetMapping("/stc/review-soon/users")
+    public ResponseEntity<?> getAffiliatedReviewSoonUsers(Authentication authentication, Pageable pageable) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        Page<UUID> result = stcService.getAllUsersWhoBelongToAffiliatedReviewSoon(uuid, pageable);
+        return ResponseEntity.ok(PaginationUtil.makePaginationMap(result));
     }
 }
