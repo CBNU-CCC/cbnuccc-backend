@@ -102,7 +102,7 @@ public class StcService {
     // 주어진 uuid의 사용자가 주어진 점검순의 대표이면 true, 아니면 false
     // 단, 점검순이 존재하지 않는 경우 false
     @Transactional
-    public boolean isReviewSoonLeaderOf(UUID uuid, ReviewSoonInfoDto reviewSoon) {
+    public boolean isReviewSoonRepresentativeOf(UUID uuid, ReviewSoonInfoDto reviewSoon) {
         Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(reviewSoon.getId());
         if (_reviewSoonInfo.isEmpty())
             return false;
