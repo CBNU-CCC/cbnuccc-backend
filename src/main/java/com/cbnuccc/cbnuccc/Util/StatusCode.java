@@ -36,7 +36,9 @@ public enum StatusCode {
     CANNOT_CHANGE_PASSWORD_WITHIN_5_MINUTES(HttpStatus.BAD_REQUEST, "5분 이내에 비밀번호를 재설정할 수 없습니다.", 20),
     NO_STC_FOUND(HttpStatus.NOT_FOUND, "주어진 STC 정보가 존재하지 않습니다.", 21),
     PASSWORD_FEATURE_TEMPORARILY_DISABLED(HttpStatus.FORBIDDEN, "비밀번호 관련 기능은 보안 강화를 위해 일시적으로 제한되었습니다.", 22),
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "주어진 refresh token이 유효하지 않습니다.", 23);
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "주어진 refresh token이 유효하지 않습니다.", 23),
+    INVALID_SOON_REPRESENTATIVE(HttpStatus.UNAUTHORIZED, "주어진 사용자가 소속된 점검순의 점검 순장/대표가 본인이 아닙니다.", 24),
+    NO_REVIEW_SOON_FOUND(HttpStatus.NOT_FOUND, "주어진 사용자가 소속된 점검순이 존재하지 않습니다.", 25);
 
     @Getter
     private final HttpStatusCode responseStatus;

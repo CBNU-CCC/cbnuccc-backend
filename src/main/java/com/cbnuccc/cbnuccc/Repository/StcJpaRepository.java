@@ -43,12 +43,21 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
                         """)
         Page<UUID> findAuthorUuid(Pageable pageable);
 
-        // 모든 STC 정보의 주어진 학년 중 생성자의 uuid 가져오기
+        // 주어진 점검순(id) 소속 사용자 중 STC 기록이 있는 uuid 목록
         @Query("""
                                 select distinct u.uuid
                                 from Stc s
                                 join s.author u
-                                where u.grade = :grade
+                                where u.affiliatedReviewSoon.id = :reviewSoonId
                         """)
-        Page<UUID> findAuthorUuidByGrade(Pageable pageable, Short grade);
+        Page<UUID> findAuthorUuidByAffiliatedReviewSoonId(Pageable pageable, Long reviewSoonId);
+
+        // affiliated_review_soon이 NULL인 사용자 중 STC 기록이 있는 uuid 목록 (기타 시트용)
+        @Query("""
+                                select distinct u.uuid
+                                from Stc s
+                                join s.author u
+                                where u.affiliatedReviewSoon is null
+                        """)
+        Page<UUID> findAuthorUuidByAffiliatedReviewSoonIsNull(Pageable pageable);
 }
