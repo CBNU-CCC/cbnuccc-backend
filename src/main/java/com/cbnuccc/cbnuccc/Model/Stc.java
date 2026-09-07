@@ -37,8 +37,19 @@ public class Stc {
 
     private LocalDate recordDate;
 
+    // TODO: 기능 개발 완료 후 삭제 요망
     @Nullable
     private String comment;
+
+    @Nullable
+    private String weeklyLife;
+
+    @Nullable
+    private String prayerRequest;
+
+    // 점검 순장님이 입력하는 메세지
+    @Nullable
+    private String review;
 
     // 각 항목별 이수 여부 (stc_topic 테이블에 저장됨). 이 테이블 분리는 사용하는 쪽에서 알 필요 없음
     @OneToMany(mappedBy = "stc", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

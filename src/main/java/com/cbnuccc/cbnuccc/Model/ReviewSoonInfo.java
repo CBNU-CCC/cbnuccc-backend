@@ -1,8 +1,5 @@
 package com.cbnuccc.cbnuccc.Model;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -17,38 +14,16 @@ import lombok.Setter;
 
 @Data
 @Entity
-@Table(name = "user", schema = "public")
-public class MyUser {
+@Table(name = "review_soon_info", schema = "public")
+public class ReviewSoonInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter(value = AccessLevel.NONE)
     private Long id;
 
-    // UserDto
-    private UUID uuid;
-
-    // UserDto
-    private String email;
-
-    private String password;
-
-    // UserDto
-    private Short rank;
-
-    // UserDto
-    private Boolean sex;
-
-    // UserDto
     private String name;
 
-    // UserDto
-    private Short grade;
-
-    private String studentId;
-
-    private OffsetDateTime passwordChangedAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "affiliated_review_soon")
-    private ReviewSoonInfo affiliatedReviewSoon;
+    @JoinColumn(name = "representative")
+    private MyUser representative;
 }
