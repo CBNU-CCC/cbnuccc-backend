@@ -106,6 +106,9 @@ public class StcService {
     // 단, 점검순이 존재하지 않는 경우 false
     @Transactional
     public boolean isReviewSoonRepresentativeOf(UUID uuid, ReviewSoonInfoDto reviewSoon) {
+        if (reviewSoon == null)
+            return false;
+
         Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(reviewSoon.getId());
         if (_reviewSoonInfo.isEmpty())
             return false;
