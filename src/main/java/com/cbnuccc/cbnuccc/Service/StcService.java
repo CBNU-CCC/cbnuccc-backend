@@ -186,7 +186,7 @@ public class StcService {
 
                 // 헤더(제목 행) 생성
                 Row headerRow = sheet.createRow(0);
-                headerRow.createCell(0).setCellValue("학년");
+                headerRow.createCell(0).setCellValue("직분");
                 headerRow.createCell(1).setCellValue("이름");
                 headerRow.createCell(2).setCellValue("기록일");
                 for (int topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
@@ -210,9 +210,32 @@ public class StcService {
                         continue;
                     MyUser author = _author.get();
 
+                    // 직분 매핑
+                    String rankString = "";
+                    switch (author.getRank()) {
+                        case 0:
+                            rankString = "순원";
+                            break;
+                        case 1:
+                            rankString = "순장";
+                            break;
+                        case 2:
+                            rankString = "사역팀";
+                            break;
+                        case 3:
+                            rankString = "나사렛";
+                            break;
+                        case 4:
+                            rankString = "간사";
+                            break;
+
+                        default:
+                            break;
+                    }
+
                     // 참여자 헤더
                     Row userHeaderRow = sheet.createRow(rowNumber++);
-                    userHeaderRow.createCell(0).setCellValue(author.getGrade()); // 학년
+                    userHeaderRow.createCell(0).setCellValue(rankString); // 직분
                     userHeaderRow.createCell(1).setCellValue(author.getName()); // 이름
                     userHeaderRow.createCell(2).setCellValue("소계");
                     for (short topicNumber = 1; topicNumber <= topicCount; topicNumber++) {
