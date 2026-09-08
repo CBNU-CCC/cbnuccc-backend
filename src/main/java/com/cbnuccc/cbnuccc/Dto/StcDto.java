@@ -27,8 +27,7 @@ public class StcDto {
     @Schema(description = "항목별 이수 여부 목록 (인덱스 + 1이 항목 번호에 대응)")
     private List<Short> topics;
 
-    // TODO: 기능 개발 완료 후 삭제 요망
-    @Schema(description = "코멘트 (기능 개발 완료 후 삭제 예정)")
+    @Schema(description = "소감", example = "이번 주도 은혜로운 한 주였습니다.")
     @Nullable
     private String comment;
 

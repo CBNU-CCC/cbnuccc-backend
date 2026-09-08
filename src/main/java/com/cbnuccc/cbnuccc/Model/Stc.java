@@ -37,7 +37,6 @@ public class Stc {
 
     private LocalDate recordDate;
 
-    // TODO: 기능 개발 완료 후 삭제 요망
     @Nullable
     private String comment;
 
