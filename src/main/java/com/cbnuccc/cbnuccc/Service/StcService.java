@@ -209,7 +209,8 @@ public class StcService {
         int recordDateColumnIndex = 3;
         int weeklyLifeColumnIndex = 4 + topicCount;
         int prayerRequestColumnIndex = weeklyLifeColumnIndex + 1;
-        int reviewColumnIndex = prayerRequestColumnIndex + 1;
+        int commentColumnIndex = prayerRequestColumnIndex + 1;
+        int reviewColumnIndex = commentColumnIndex + 1;
 
         // 헤더(제목 행) 생성
         Row headerRow = sheet.createRow(0);
@@ -222,6 +223,7 @@ public class StcService {
         }
         headerRow.createCell(weeklyLifeColumnIndex).setCellValue("일주일의 삶");
         headerRow.createCell(prayerRequestColumnIndex).setCellValue("기도제목");
+        headerRow.createCell(commentColumnIndex).setCellValue("소감");
         headerRow.createCell(reviewColumnIndex).setCellValue("점검 순장의 한 마디");
 
         // 데이터 행 생성
@@ -280,18 +282,20 @@ public class StcService {
 
                 // 값 기록 안 했다면 FALSE로 간주
                 Map<Short, Short> completionByTopicNumber = Map.of();
-                String weeklyLife = "", prayerRequest = "", review = "";
+                String weeklyLife = "", prayerRequest = "", comment = "", review = "";
                 if (_stc.isPresent()) {
                     Stc stc = _stc.get();
                     completionByTopicNumber = stc.getTopics().stream()
                             .collect(Collectors.toMap(stcTopic -> stcTopic.getTopicNumber(),
                                     stcTopic -> stcTopic.getCompletion()));
 
-                    // 일주읠 삶, 기도제목, 점검 순장의 한 마디 존재하면 병기
+                    // 일주읠 삶, 기도제목, 소감, 점검 순장의 한 마디 존재하면 병기
                     String _weeklyLife = stc.getWeeklyLife();
                     weeklyLife = _weeklyLife == null ? "" : _weeklyLife;
                     String _prayerRequest = stc.getPrayerRequest();
                     prayerRequest = _prayerRequest == null ? "" : _prayerRequest;
+                    String _comment = stc.getComment();
+                    comment = _comment == null ? "" : _comment;
                     String _review = stc.getReview();
                     review = _review == null ? "" : _review;
                 }
@@ -323,6 +327,7 @@ public class StcService {
 
                 r.createCell(weeklyLifeColumnIndex).setCellValue(weeklyLife);
                 r.createCell(prayerRequestColumnIndex).setCellValue(prayerRequest);
+                r.createCell(commentColumnIndex).setCellValue(comment);
                 r.createCell(reviewColumnIndex).setCellValue(review);
             }
         }
@@ -330,6 +335,7 @@ public class StcService {
         sheet.autoSizeColumn(recordDateColumnIndex); // 기록일 컬럼에 대해 크기 조정
         sheet.autoSizeColumn(weeklyLifeColumnIndex); // 일주일 삶 컬럼에 대해 크기 조정
         sheet.autoSizeColumn(prayerRequestColumnIndex); // 기도제목 컬럼에 대해 크기 조정
+        sheet.autoSizeColumn(commentColumnIndex); // 소감 컬럼에 대해 크기 조정
         sheet.autoSizeColumn(reviewColumnIndex); // 점검 순장의 한 마디 컬럼에 대해 크기 조정
     }
 
