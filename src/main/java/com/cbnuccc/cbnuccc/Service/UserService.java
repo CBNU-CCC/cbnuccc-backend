@@ -26,6 +26,7 @@ import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.MissionJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.PrayerJpaRepository;
+import com.cbnuccc.cbnuccc.Repository.ReviewSoonInfoJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
@@ -49,6 +50,7 @@ public class UserService {
     private final VerificationJpaRepository verificationJpaRepository;
     private final PrayerJpaRepository prayerJpaRepository;
     private final MissionJpaRepository missionJpaRepository;
+    private final ReviewSoonInfoJpaRepository reviewSoonInfoJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
     private final WebClient webClient;
@@ -112,6 +114,20 @@ public class UserService {
         dto.setName(limitedUserDto.getName());
         dto.setGrade(limitedUserDto.getGrade());
         return dto;
+    }
+
+    // 주어진 사용자에 담긴 소속 점검순 id로 실제 존재하는 점검순을 찾아 반환하기
+    // 소속 점검순이 주어지지 않았다면(null) DataWithStatusCode의 data가 null인 상태로 성공 반환
+    private DataWithStatusCode<ReviewSoonInfo> resolveAffiliatedReviewSoon(MyUser user) {
+        ReviewSoonInfo givenReviewSoon = user.getAffiliatedReviewSoon();
+        if (givenReviewSoon == null || givenReviewSoon.getId() == null)
+            return new DataWithStatusCode<>(StatusCode.NO_ERROR, null);
+
+        Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(givenReviewSoon.getId());
+        if (_reviewSoonInfo.isEmpty())
+            return new DataWithStatusCode<>(StatusCode.NO_REVIEW_SOON_FOUND, null);
+
+        return new DataWithStatusCode<>(StatusCode.NO_ERROR, _reviewSoonInfo.get());
     }
 
     // 사용자의 비밀번호를 암호화하기
@@ -208,6 +224,12 @@ public class UserService {
         if (!securityUtil.checkValidPassword(user.getPassword()))
             return new DataWithStatusCode<>(StatusCode.INVALID_PASSWORD, null);
 
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 연결하기
+        DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
+        if (resolvedReviewSoon.code().checkIsError())
+            return new DataWithStatusCode<>(resolvedReviewSoon.code(), null);
+        user.setAffiliatedReviewSoon(resolvedReviewSoon.data());
+
         user = encodeUserPassword(user, user.getPassword());
         user = encodeUserStudentId(user, user.getStudentId());
 
@@ -251,6 +273,14 @@ public class UserService {
             oldUser.setName(user.getName());
         if (user.getGrade() != null)
             oldUser.setGrade(user.getGrade());
+
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 변경하기
+        if (user.getAffiliatedReviewSoon() != null) {
+            DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
+            if (resolvedReviewSoon.code().checkIsError())
+                return resolvedReviewSoon.code();
+            oldUser.setAffiliatedReviewSoon(resolvedReviewSoon.data());
+        }
 
         userJpaRepository.save(oldUser);
         return StatusCode.NO_ERROR;
