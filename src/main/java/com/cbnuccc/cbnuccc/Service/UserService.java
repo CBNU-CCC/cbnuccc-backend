@@ -26,6 +26,7 @@ import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.MissionJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.PrayerJpaRepository;
+import com.cbnuccc.cbnuccc.Repository.ReviewSoonInfoJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
@@ -49,6 +50,7 @@ public class UserService {
     private final VerificationJpaRepository verificationJpaRepository;
     private final PrayerJpaRepository prayerJpaRepository;
     private final MissionJpaRepository missionJpaRepository;
+    private final ReviewSoonInfoJpaRepository reviewSoonInfoJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
     private final WebClient webClient;
@@ -59,7 +61,8 @@ public class UserService {
     // User를 UserDto로 변환하기
     // 세션이 열려 있는 동안(트랜잭션 내부) 호출해야 함 - lazy 로딩되는 affiliatedReviewSoon을
     // 프록시 상태 그대로 DTO에 담으면 세션 종료 후 직렬화 시점에 LazyInitializationException 발생
-    private UserDto userToUserDto(MyUser user) {
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null) - 대표 여부 계산에 사용됨
+    private UserDto userToUserDto(MyUser user, UUID callerUuid) {
         return new UserDto(
                 user.getUuid(),
                 user.getEmail(),
@@ -69,14 +72,21 @@ public class UserService {
                 user.getGrade(),
                 prayerJpaRepository.countByAuthorUuid(user.getUuid()),
                 missionJpaRepository.countByAuthorUuid(user.getUuid()),
-                reviewSoonInfoToDto(user.getAffiliatedReviewSoon()));
+                reviewSoonInfoToDto(user.getAffiliatedReviewSoon(), callerUuid));
     }
 
     // ReviewSoonInfo를 ReviewSoonInfoDto로 변환하기
-    private ReviewSoonInfoDto reviewSoonInfoToDto(ReviewSoonInfo reviewSoonInfo) {
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null) - 대표 여부 계산에 사용됨
+    private ReviewSoonInfoDto reviewSoonInfoToDto(ReviewSoonInfo reviewSoonInfo, UUID callerUuid) {
         if (reviewSoonInfo == null)
             return null;
-        return new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName());
+
+        MyUser representative = reviewSoonInfo.getRepresentative();
+        boolean isRepresentative = callerUuid != null
+                && representative != null
+                && callerUuid.equals(representative.getUuid());
+
+        return new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName(), isRepresentative);
     }
 
     // UserDto를 User로 변환하기
@@ -114,6 +124,20 @@ public class UserService {
         return dto;
     }
 
+    // 주어진 사용자에 담긴 소속 점검순 id로 실제 존재하는 점검순을 찾아 반환하기
+    // 소속 점검순이 주어지지 않았다면(null) DataWithStatusCode의 data가 null인 상태로 성공 반환
+    private DataWithStatusCode<ReviewSoonInfo> resolveAffiliatedReviewSoon(MyUser user) {
+        ReviewSoonInfo givenReviewSoon = user.getAffiliatedReviewSoon();
+        if (givenReviewSoon == null || givenReviewSoon.getId() == null)
+            return new DataWithStatusCode<>(StatusCode.NO_ERROR, null);
+
+        Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(givenReviewSoon.getId());
+        if (_reviewSoonInfo.isEmpty())
+            return new DataWithStatusCode<>(StatusCode.NO_REVIEW_SOON_FOUND, null);
+
+        return new DataWithStatusCode<>(StatusCode.NO_ERROR, _reviewSoonInfo.get());
+    }
+
     // 사용자의 비밀번호를 암호화하기
     private MyUser encodeUserPassword(MyUser user, String planePassword) {
         String encodedPassword = passwordEncoder.encode(securityUtil.addPepper(planePassword));
@@ -146,43 +170,48 @@ public class UserService {
     }
 
     // 주어진 uuid로 UserDto 찾기
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null)
     @Transactional
-    public Optional<UserDto> findUserDtoByUuid(UUID uuid) {
+    public Optional<UserDto> findUserDtoByUuid(UUID uuid, UUID callerUuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return Optional.ofNullable(null);
-        UserDto result = userToUserDto(_user.get());
+        UserDto result = userToUserDto(_user.get(), callerUuid);
         return Optional.of(result);
     }
 
     // 주어진 이메일로 UserDto 찾기
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null)
     @Transactional
-    public Optional<UserDto> findUserDtoByEmail(String email) {
+    public Optional<UserDto> findUserDtoByEmail(String email, UUID callerUuid) {
         Optional<MyUser> _user = userJpaRepository.findByEmail(email.toLowerCase());
         if (_user.isEmpty())
             return Optional.ofNullable(null);
-        UserDto result = userToUserDto(_user.get());
+        UserDto result = userToUserDto(_user.get(), callerUuid);
         return Optional.of(result);
     }
 
     // 주어진 uuid로 LimitedUserDto 찾기
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null)
     @Transactional
-    public Optional<LimitedUserDto> findLimitedUserDtoByUuid(UUID uuid) {
+    public Optional<LimitedUserDto> findLimitedUserDtoByUuid(UUID uuid, UUID callerUuid) {
         Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
         if (_user.isEmpty())
             return Optional.ofNullable(null);
-        LimitedUserDto result = userDtoToLimitedUserDto(userToUserDto(_user.get()));
+        LimitedUserDto result = userDtoToLimitedUserDto(userToUserDto(_user.get(), callerUuid));
         return Optional.of(result);
     }
 
     // 주어진 UserDto와 일치하는 모든 사용자 찾기
+    // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null)
     @Transactional
-    public Page<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser, Pageable pageable) {
+    public Page<LimitedUserDto> findAllLimitedUserDtosByLimitedUserDto(LimitedUserDto exampleUser, Pageable pageable,
+            UUID callerUuid) {
         // LimitedUserDto를 User로 변환하기
         MyUser example = userDtoToUser(limitedUserDtoToUserDto(exampleUser));
         Page<MyUser> users = userJpaRepository.findAll(Example.of(example), pageable);
 
-        return users.map(user -> userDtoToLimitedUserDto(userToUserDto(user)));
+        return users.map(user -> userDtoToLimitedUserDto(userToUserDto(user, callerUuid)));
     }
 
     // 주어진 jwt 토큰에서 uuid 가져오기
@@ -208,6 +237,12 @@ public class UserService {
         if (!securityUtil.checkValidPassword(user.getPassword()))
             return new DataWithStatusCode<>(StatusCode.INVALID_PASSWORD, null);
 
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 연결하기
+        DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
+        if (resolvedReviewSoon.code().checkIsError())
+            return new DataWithStatusCode<>(resolvedReviewSoon.code(), null);
+        user.setAffiliatedReviewSoon(resolvedReviewSoon.data());
+
         user = encodeUserPassword(user, user.getPassword());
         user = encodeUserStudentId(user, user.getStudentId());
 
@@ -216,7 +251,8 @@ public class UserService {
         try {
             MyUser createdUser = userJpaRepository.save(user);
             verificationJpaRepository.deleteByEmail(email); // 인증 테이블에서 인증된 사용자 삭제하기
-            LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser));
+            // 회원가입은 로그인 전 이루어지므로 본인(caller) 개념이 없음 -> isRepresentative는 항상 false
+            LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser, null));
             return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
         } catch (Exception e) {
             LogUtil.printBasicWarnLog(LogHeader.CREATE_USER, LogUtil.makeExceptionKV(e));
@@ -251,6 +287,14 @@ public class UserService {
             oldUser.setName(user.getName());
         if (user.getGrade() != null)
             oldUser.setGrade(user.getGrade());
+
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 변경하기
+        if (user.getAffiliatedReviewSoon() != null) {
+            DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
+            if (resolvedReviewSoon.code().checkIsError())
+                return resolvedReviewSoon.code();
+            oldUser.setAffiliatedReviewSoon(resolvedReviewSoon.data());
+        }
 
         userJpaRepository.save(oldUser);
         return StatusCode.NO_ERROR;

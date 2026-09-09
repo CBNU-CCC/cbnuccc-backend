@@ -39,7 +39,8 @@ public enum LogHeader {
     REFRESH_TOKEN,
     LOGOUT,
     SCHEDULED_DELETE_EXPIRED_REFRESH_TOKEN,
-    GET_REVIEW_SOON;
+    GET_REVIEW_SOON,
+    GET_REVIEW_SOON_LIST;
 
     @Getter
     private final String header;
