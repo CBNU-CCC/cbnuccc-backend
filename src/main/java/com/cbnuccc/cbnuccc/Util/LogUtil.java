@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Util;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,10 @@ public class LogUtil {
 
     public static StructuredArgument makeIdKV(long id) {
         return kv("id", id);
+    }
+
+    public static StructuredArgument makeRecordDateKV(LocalDate recordDate) {
+        return kv("record_date", recordDate);
     }
 
     public static StructuredArgument makePageSizeKV(Pageable pageable) {

@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Controller;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -95,6 +96,36 @@ public class StcController {
         }
 
         LogUtil.printBasicInfoLog(LogHeader.GET_STC, LogUtil.makeIdKV(id));
+        return ResponseEntity.ok(result.data());
+    }
+
+    @Operation(summary = "내 STC(일자별) 조회", description = "주어진 기록일(recordDate)에 해당하는 내 STC 정보 하나만 가져온다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "내 STC 조회 성공",
+                content = @Content(examples = @ExampleObject(
+                    name = "내 STC 단일 응답 예시",
+                    value = "{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"}"
+                ))),
+        @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 미제공 또는 만료)", content = @Content),
+        @ApiResponse(responseCode = "404", description = "해당 기록일의 STC를 찾을 수 없음",
+                content = @Content(examples = @ExampleObject(
+                    name = "STC 없음 응답 예시",
+                    value = "{\"errorCode\":21,\"message\":\"주어진 STC 정보가 존재하지 않습니다.\"}"
+                )))
+    })
+    @GetMapping("/stc/date/{date}")
+    public ResponseEntity<?> getMySpecificStcByDate(
+            @Parameter(hidden = true) Authentication authentication,
+            @Parameter(description = "조회할 STC의 기록일 (yyyy-MM-dd)", example = "2026-09-06") @PathVariable("date") LocalDate date) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        DataWithStatusCode<StcDto> result = stcService.getSpecificStc(uuid, date);
+        StatusCode code = result.code();
+        if (code.checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.GET_STC, LogUtil.makeStatusCodeMessageKV(code));
+            return code.makeErrorResponseEntity();
+        }
+
+        LogUtil.printBasicInfoLog(LogHeader.GET_STC, LogUtil.makeRecordDateKV(date));
         return ResponseEntity.ok(result.data());
     }
 
