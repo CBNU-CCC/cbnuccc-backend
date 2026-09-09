@@ -164,7 +164,7 @@ public class StcController {
         UUID uuid = userService.getUuidFromAuth(authentication);
 
         // 점검 순장의 점검 한 마디를 받을 사용자 추출
-        Optional<UserDto> _user = userService.findUserDtoByUuid(reviewDto.getTo());
+        Optional<UserDto> _user = userService.findUserDtoByUuid(reviewDto.getTo(), uuid);
         if (_user.isEmpty())
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
         UserDto user = _user.get();

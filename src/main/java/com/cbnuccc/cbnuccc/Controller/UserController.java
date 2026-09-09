@@ -59,11 +59,14 @@ public class UserController {
 
     @Operation(summary = "모든 유저 정보", description = "모든 유저 정보-제한됨- 가져오기")
     @GetMapping("/user")
-    public ResponseEntity<Object> getUser(@ModelAttribute LimitedUserDto userDto, Pageable pageable) {
+    public ResponseEntity<Object> getUser(
+            @Parameter(hidden = true) Authentication authentication,
+            @ModelAttribute LimitedUserDto userDto, Pageable pageable) {
         if (userDto == null)
             userDto = new LimitedUserDto();
 
-        Page<LimitedUserDto> dtos = userService.findAllLimitedUserDtosByLimitedUserDto(userDto, pageable);
+        UUID callerUuid = userService.getUuidFromAuth(authentication);
+        Page<LimitedUserDto> dtos = userService.findAllLimitedUserDtosByLimitedUserDto(userDto, pageable, callerUuid);
         LogUtil.printBasicInfoLog(LogHeader.GET_USER,
                 LogUtil.makeCountKV(dtos.getNumberOfElements()),
                 LogUtil.makePageNumberKV(pageable),
@@ -77,11 +80,15 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "해당 UUID의 사용자를 찾을 수 없음", content = @Content)
     })
     @GetMapping("/user/{uuid}")
-    public ResponseEntity<?> getUserByUuid(@Parameter(description = "조회할 유저의 UUID") @PathVariable("uuid") UUID uuid) {
+    public ResponseEntity<?> getUserByUuid(
+            @Parameter(hidden = true) Authentication authentication,
+            @Parameter(description = "조회할 유저의 UUID") @PathVariable("uuid") UUID uuid) {
         LimitedUserDto user = new LimitedUserDto();
         user.setUuid(uuid);
 
-        Page<LimitedUserDto> resultBody = userService.findAllLimitedUserDtosByLimitedUserDto(user, Pageable.ofSize(1));
+        UUID callerUuid = userService.getUuidFromAuth(authentication);
+        Page<LimitedUserDto> resultBody = userService.findAllLimitedUserDtosByLimitedUserDto(user,
+                Pageable.ofSize(1), callerUuid);
         if (resultBody.getSize() == 0) {
             LogUtil.printBasicWarnLog(LogHeader.GET_USER, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
@@ -96,7 +103,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<?> getMyUserData(@Parameter(hidden = true) Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        Optional<UserDto> _me = userService.findUserDtoByUuid(uuid);
+        Optional<UserDto> _me = userService.findUserDtoByUuid(uuid, uuid);
         if (_me.isEmpty()) {
             LogUtil.printBasicWarnLog(LogHeader.GET_ME, LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));
             return StatusCode.NO_USER_FOUND.makeErrorResponseEntity();
@@ -121,7 +128,8 @@ public class UserController {
         }
         String email = body.get("email").toLowerCase();
 
-        Optional<UserDto> _user = userService.findUserDtoByEmail(email);
+        // 회원가입 전 단계(비로그인)에서 호출되므로 본인(caller) 개념이 없음
+        Optional<UserDto> _user = userService.findUserDtoByEmail(email, null);
         if (_user.isPresent()) {
             LogUtil.printBasicWarnLog(LogHeader.CHECK_EMAIL_DUPLICATION, LogUtil.makeStatusCodeMessageKV(
                     StatusCode.DUPLICATED_EMAIL));
@@ -137,7 +145,7 @@ public class UserController {
         @ApiResponse(responseCode = "201", description = "사용자 생성 성공",
                 content = @Content(examples = @ExampleObject(
                     name = "사용자 생성 응답 예시",
-                    value = "{\"uuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"rank\":0,\"name\":\"박순원\",\"grade\":1,\"prayerCount\":0,\"missionCount\":0,\"affiliatedReviewSoon\":{\"id\":3,\"name\":\"3점검순\"}}"
+                    value = "{\"uuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"rank\":0,\"name\":\"박순원\",\"grade\":1,\"prayerCount\":0,\"missionCount\":0,\"affiliatedReviewSoon\":{\"id\":3,\"name\":\"3점검순\",\"isRepresentative\":false}}"
                 ))),
         @ApiResponse(responseCode = "400", description = "비밀번호 형식이 유효하지 않음",
                 content = @Content(examples = @ExampleObject(
@@ -187,7 +195,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "정보 수정 성공",
                 content = @Content(examples = @ExampleObject(
                     name = "정보 수정 응답 예시",
-                    value = "{\"uuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"email\":\"example123@gmail.com\",\"rank\":0,\"sex\":true,\"name\":\"박순원\",\"grade\":1,\"prayerCount\":2,\"missionCount\":1,\"affiliatedReviewSoon\":{\"id\":3,\"name\":\"3점검순\"}}"
+                    value = "{\"uuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"email\":\"example123@gmail.com\",\"rank\":0,\"sex\":true,\"name\":\"박순원\",\"grade\":1,\"prayerCount\":2,\"missionCount\":1,\"affiliatedReviewSoon\":{\"id\":3,\"name\":\"3점검순\",\"isRepresentative\":true}}"
                 ))),
         @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 미제공 또는 만료)", content = @Content),
         @ApiResponse(responseCode = "403", description = "id/uuid/studentId/password 등 중요 정보를 수정하려고 함",
@@ -285,7 +293,7 @@ public class UserController {
     public ResponseEntity<?> uploadProfileImage(@Parameter(hidden = true) Authentication authentication,
             @RequestParam("file") MultipartFile file) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
+        Optional<UserDto> _user = userService.findUserDtoByUuid(uuid, uuid);
 
         if (_user.isEmpty()) {
             LogUtil.printBasicWarnLog(LogHeader.UPLOAD_PROFILE_IMAGE,
@@ -310,7 +318,7 @@ public class UserController {
     @DeleteMapping("/profile-image")
     public ResponseEntity<?> deleteProfileImage(@Parameter(hidden = true) Authentication authentication) {
         UUID uuid = userService.getUuidFromAuth(authentication);
-        Optional<UserDto> _user = userService.findUserDtoByUuid(uuid);
+        Optional<UserDto> _user = userService.findUserDtoByUuid(uuid, uuid);
         if (_user.isEmpty()) {
             LogUtil.printBasicWarnLog(LogHeader.DELETE_PROFILE_IMAGE,
                     LogUtil.makeStatusCodeMessageKV(StatusCode.NO_USER_FOUND));

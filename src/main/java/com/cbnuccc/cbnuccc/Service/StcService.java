@@ -398,8 +398,12 @@ public class StcService {
             return new DataWithStatusCode<>(StatusCode.NO_REVIEW_SOON_FOUND, null);
         }
 
+        // 본인(uuid)의 소속 점검순을 조회하는 것이므로, 대표 여부도 같은 uuid로 확인함
+        MyUser representative = reviewSoonInfo.getRepresentative();
+        boolean isRepresentative = representative != null && representative.getUuid().equals(uuid);
+
         return new DataWithStatusCode<>(StatusCode.NO_ERROR,
-                new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName()));
+                new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName(), isRepresentative));
     }
 
     // 본인이 소속된 모든 사용자의 uuid 반환
