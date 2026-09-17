@@ -17,8 +17,12 @@ public interface UserJpaRepository extends JpaRepository<MyUser, Long> {
 
     @Query("""
             select uuid
-            from MyUser
-            where affiliatedReviewSoon.id = :id
+            from MyUser u
+            where u.id in (
+                select rs.id
+                from ReviewSoon rs
+                where rs.affiliatedReviewSoon.id = :id
+            )
             """)
     Page<UUID> findAllAffiliatedReviewSoonUsersUuid(long id, Pageable pageable);
 }
