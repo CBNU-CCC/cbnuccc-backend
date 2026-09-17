@@ -28,10 +28,12 @@ import org.springframework.stereotype.Service;
 import com.cbnuccc.cbnuccc.Dto.ReviewSoonInfoDto;
 import com.cbnuccc.cbnuccc.Dto.StcDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
+import com.cbnuccc.cbnuccc.Model.ReviewSoon;
 import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Stc;
 import com.cbnuccc.cbnuccc.Model.StcTopic;
 import com.cbnuccc.cbnuccc.Repository.ReviewSoonInfoJpaRepository;
+import com.cbnuccc.cbnuccc.Repository.ReviewSoonJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.StcJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.StcTopicJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
@@ -51,6 +53,7 @@ public class StcService {
     private final StcJpaRepository stcJpaRepository;
     private final StcTopicJpaRepository stcTopicJpaRepository;
     private final ReviewSoonInfoJpaRepository reviewSoonInfoJpaRepository;
+    private final ReviewSoonJpaRepository reviewSoonJpaRepository;
 
     // Stc를 StcDto로 변환하기
     private StcDto stcToStcDto(Stc stc) {
@@ -102,20 +105,27 @@ public class StcService {
         return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcDto);
     }
 
-    // 주어진 uuid의 사용자가 주어진 점검순의 대표이면 true, 아니면 false
+    // 주어진 uuid의 사용자가 주어진 점검순의 대표(순장)이면 true, 아니면 false
     // 단, 점검순이 존재하지 않는 경우 false
+    // 점검순당 대표가 2명 이상 존재할 수 있으므로, "uuid 본인의 review_soon 행이 이 그룹을 가리키고
+    // is_representative가 true인지"로 판단함
     @Transactional
     public boolean isReviewSoonRepresentativeOf(UUID uuid, ReviewSoonInfoDto reviewSoon) {
         if (reviewSoon == null)
             return false;
 
-        Optional<ReviewSoonInfo> _reviewSoonInfo = reviewSoonInfoJpaRepository.findById(reviewSoon.getId());
-        if (_reviewSoonInfo.isEmpty())
+        Optional<MyUser> _user = userJpaRepository.findByUuid(uuid);
+        if (_user.isEmpty())
             return false;
 
-        // 일치하는지 확인 후 boolean 값 반환
-        ReviewSoonInfo reviewSoonInfo = _reviewSoonInfo.get();
-        return reviewSoonInfo.getRepresentative().getUuid().equals(uuid);
+        Optional<ReviewSoon> _userReviewSoon = reviewSoonJpaRepository.findById(_user.get().getId());
+        if (_userReviewSoon.isEmpty())
+            return false;
+
+        ReviewSoon userReviewSoon = _userReviewSoon.get();
+        return userReviewSoon.isRepresentative()
+                && userReviewSoon.getAffiliatedReviewSoon() != null
+                && userReviewSoon.getAffiliatedReviewSoon().getId().equals(reviewSoon.getId());
     }
 
     // 점검순 인원에 대한 점검 한 마디 작성
@@ -391,16 +401,16 @@ public class StcService {
             return new DataWithStatusCode<>(StatusCode.NO_USER_FOUND, null);
         }
         MyUser user = _user.get();
-        ReviewSoonInfo reviewSoonInfo = user.getAffiliatedReviewSoon();
+        Optional<ReviewSoon> _userReviewSoon = reviewSoonJpaRepository.findById(user.getId());
+        ReviewSoonInfo reviewSoonInfo = _userReviewSoon.map(ReviewSoon::getAffiliatedReviewSoon).orElse(null);
         if (reviewSoonInfo == null) {
             LogUtil.printBasicWarnLog(LogHeader.GET_REVIEW_SOON,
                     LogUtil.makeStatusCodeMessageKV(StatusCode.NO_REVIEW_SOON_FOUND));
             return new DataWithStatusCode<>(StatusCode.NO_REVIEW_SOON_FOUND, null);
         }
 
-        // 본인(uuid)의 소속 점검순을 조회하는 것이므로, 대표 여부도 같은 uuid로 확인함
-        MyUser representative = reviewSoonInfo.getRepresentative();
-        boolean isRepresentative = representative != null && representative.getUuid().equals(uuid);
+        // 본인(uuid)의 소속 점검순을 조회하는 것이므로, 본인의 review_soon 행에서 대표 여부를 바로 읽으면 됨
+        boolean isRepresentative = _userReviewSoon.get().isRepresentative();
 
         return new DataWithStatusCode<>(StatusCode.NO_ERROR,
                 new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName(), isRepresentative));

@@ -48,16 +48,25 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
                                 select distinct u.uuid
                                 from Stc s
                                 join s.author u
-                                where u.affiliatedReviewSoon.id = :reviewSoonId
+                                where u.id in (
+                                        select rs.id
+                                        from ReviewSoon rs
+                                        where rs.affiliatedReviewSoon.id = :reviewSoonId
+                                )
                         """)
         Page<UUID> findAuthorUuidByAffiliatedReviewSoonId(Pageable pageable, Long reviewSoonId);
 
-        // affiliated_review_soon이 NULL인 사용자 중 STC 기록이 있는 uuid 목록 (기타 시트용)
+        // 소속 점검순이 없는(review_soon 행이 없거나, 있어도 affiliated_review_soon이 NULL인) 사용자 중
+        // STC 기록이 있는 uuid 목록 (기타 시트용)
         @Query("""
                                 select distinct u.uuid
                                 from Stc s
                                 join s.author u
-                                where u.affiliatedReviewSoon is null
+                                where u.id not in (
+                                        select rs.id
+                                        from ReviewSoon rs
+                                        where rs.affiliatedReviewSoon is not null
+                                )
                         """)
         Page<UUID> findAuthorUuidByAffiliatedReviewSoonIsNull(Pageable pageable);
 }
