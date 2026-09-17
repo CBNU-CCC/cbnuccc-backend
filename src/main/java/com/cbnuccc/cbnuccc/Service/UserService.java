@@ -68,7 +68,7 @@ public class UserService {
     // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null) - 대표 여부 계산에 사용됨
     private UserDto userToUserDto(MyUser user, UUID callerUuid) {
         ReviewSoonInfo affiliatedReviewSoon = reviewSoonJpaRepository.findById(user.getId())
-                .map(ReviewSoon::getAffiliatedReviewSoon)
+                .map(rs -> rs.getAffiliatedReviewSoon())
                 .orElse(null);
 
         return new UserDto(

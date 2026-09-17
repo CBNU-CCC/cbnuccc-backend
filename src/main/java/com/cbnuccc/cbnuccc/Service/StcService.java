@@ -402,7 +402,7 @@ public class StcService {
         }
         MyUser user = _user.get();
         Optional<ReviewSoon> _userReviewSoon = reviewSoonJpaRepository.findById(user.getId());
-        ReviewSoonInfo reviewSoonInfo = _userReviewSoon.map(ReviewSoon::getAffiliatedReviewSoon).orElse(null);
+        ReviewSoonInfo reviewSoonInfo = _userReviewSoon.map(rs -> rs.getAffiliatedReviewSoon()).orElse(null);
         if (reviewSoonInfo == null) {
             LogUtil.printBasicWarnLog(LogHeader.GET_REVIEW_SOON,
                     LogUtil.makeStatusCodeMessageKV(StatusCode.NO_REVIEW_SOON_FOUND));
