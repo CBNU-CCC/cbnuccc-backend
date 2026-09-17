@@ -1,5 +1,6 @@
 package com.cbnuccc.cbnuccc.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,11 +23,13 @@ import com.cbnuccc.cbnuccc.Dto.ResetPasswordDto;
 import com.cbnuccc.cbnuccc.Dto.ReviewSoonInfoDto;
 import com.cbnuccc.cbnuccc.Dto.UserDto;
 import com.cbnuccc.cbnuccc.Model.MyUser;
+import com.cbnuccc.cbnuccc.Model.ReviewSoon;
 import com.cbnuccc.cbnuccc.Model.ReviewSoonInfo;
 import com.cbnuccc.cbnuccc.Model.Verification;
 import com.cbnuccc.cbnuccc.Repository.MissionJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.PrayerJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.ReviewSoonInfoJpaRepository;
+import com.cbnuccc.cbnuccc.Repository.ReviewSoonJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.UserJpaRepository;
 import com.cbnuccc.cbnuccc.Repository.VerificationJpaRepository;
 import com.cbnuccc.cbnuccc.Util.DataWithStatusCode;
@@ -51,6 +54,7 @@ public class UserService {
     private final PrayerJpaRepository prayerJpaRepository;
     private final MissionJpaRepository missionJpaRepository;
     private final ReviewSoonInfoJpaRepository reviewSoonInfoJpaRepository;
+    private final ReviewSoonJpaRepository reviewSoonJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
     private final WebClient webClient;
@@ -63,6 +67,10 @@ public class UserService {
     // 프록시 상태 그대로 DTO에 담으면 세션 종료 후 직렬화 시점에 LazyInitializationException 발생
     // callerUuid: 요청을 보낸 본인의 uuid (로그인하지 않은 요청이라면 null) - 대표 여부 계산에 사용됨
     private UserDto userToUserDto(MyUser user, UUID callerUuid) {
+        ReviewSoonInfo affiliatedReviewSoon = reviewSoonJpaRepository.findById(user.getId())
+                .map(rs -> rs.getAffiliatedReviewSoon())
+                .orElse(null);
+
         return new UserDto(
                 user.getUuid(),
                 user.getEmail(),
@@ -72,7 +80,7 @@ public class UserService {
                 user.getGrade(),
                 prayerJpaRepository.countByAuthorUuid(user.getUuid()),
                 missionJpaRepository.countByAuthorUuid(user.getUuid()),
-                reviewSoonInfoToDto(user.getAffiliatedReviewSoon(), callerUuid));
+                reviewSoonInfoToDto(affiliatedReviewSoon, callerUuid));
     }
 
     // ReviewSoonInfo를 ReviewSoonInfoDto로 변환하기
@@ -81,12 +89,50 @@ public class UserService {
         if (reviewSoonInfo == null)
             return null;
 
-        MyUser representative = reviewSoonInfo.getRepresentative();
-        boolean isRepresentative = callerUuid != null
-                && representative != null
-                && callerUuid.equals(representative.getUuid());
-
+        boolean isRepresentative = isCallerRepresentativeOfGroup(callerUuid, reviewSoonInfo.getId());
         return new ReviewSoonInfoDto(reviewSoonInfo.getId(), reviewSoonInfo.getName(), isRepresentative);
+    }
+
+    // 주어진 caller가 주어진 점검순(groupId)의 대표(순장)인지 확인하기
+    // 점검순당 대표가 2명 이상 존재할 수 있으므로, "caller 본인의 review_soon 행이 이 그룹을 가리키고
+    // is_representative가 true인지"로 판단함
+    private boolean isCallerRepresentativeOfGroup(UUID callerUuid, Long groupId) {
+        if (callerUuid == null || groupId == null)
+            return false;
+
+        Optional<MyUser> _caller = userJpaRepository.findByUuid(callerUuid);
+        if (_caller.isEmpty())
+            return false;
+
+        Optional<ReviewSoon> _callerReviewSoon = reviewSoonJpaRepository.findById(_caller.get().getId());
+        if (_callerReviewSoon.isEmpty())
+            return false;
+
+        ReviewSoon callerReviewSoon = _callerReviewSoon.get();
+        return callerReviewSoon.isRepresentative()
+                && callerReviewSoon.getAffiliatedReviewSoon() != null
+                && groupId.equals(callerReviewSoon.getAffiliatedReviewSoon().getId());
+    }
+
+    // 주어진 uuid의 사용자의 소속 점검순을 resolvedReviewSoon으로 upsert하기 (null이면 소속 해제)
+    // 소속 점검순이 실제로 바뀌는 경우, 이전 그룹 기준의 대표 여부는 의미가 없으므로 false로 초기화함
+    private void saveReviewSoonAssociation(Long userId, ReviewSoonInfo resolvedReviewSoon) {
+        ReviewSoon reviewSoon = reviewSoonJpaRepository.findById(userId).orElseGet(() -> {
+            ReviewSoon newReviewSoon = new ReviewSoon();
+            newReviewSoon.setId(userId);
+            return newReviewSoon;
+        });
+
+        ReviewSoonInfo previousReviewSoon = reviewSoon.getAffiliatedReviewSoon();
+        Long previousId = previousReviewSoon == null ? null : previousReviewSoon.getId();
+        Long newId = resolvedReviewSoon == null ? null : resolvedReviewSoon.getId();
+        boolean groupChanged = !Objects.equals(previousId, newId);
+
+        reviewSoon.setAffiliatedReviewSoon(resolvedReviewSoon);
+        if (groupChanged)
+            reviewSoon.setRepresentative(false);
+
+        reviewSoonJpaRepository.save(reviewSoon);
     }
 
     // UserDto를 User로 변환하기
@@ -237,11 +283,10 @@ public class UserService {
         if (!securityUtil.checkValidPassword(user.getPassword()))
             return new DataWithStatusCode<>(StatusCode.INVALID_PASSWORD, null);
 
-        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 연결하기
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인하기 (연결은 저장 후 별도로 처리)
         DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
         if (resolvedReviewSoon.code().checkIsError())
             return new DataWithStatusCode<>(resolvedReviewSoon.code(), null);
-        user.setAffiliatedReviewSoon(resolvedReviewSoon.data());
 
         user = encodeUserPassword(user, user.getPassword());
         user = encodeUserStudentId(user, user.getStudentId());
@@ -251,6 +296,11 @@ public class UserService {
         try {
             MyUser createdUser = userJpaRepository.save(user);
             verificationJpaRepository.deleteByEmail(email); // 인증 테이블에서 인증된 사용자 삭제하기
+
+            // 소속 점검순이 주어졌다면 review_soon 테이블에 연결하기 (신규 가입이므로 항상 대표 아님으로 시작)
+            if (resolvedReviewSoon.data() != null)
+                saveReviewSoonAssociation(createdUser.getId(), resolvedReviewSoon.data());
+
             // 회원가입은 로그인 전 이루어지므로 본인(caller) 개념이 없음 -> isRepresentative는 항상 false
             LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser, null));
             return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
@@ -288,12 +338,13 @@ public class UserService {
         if (user.getGrade() != null)
             oldUser.setGrade(user.getGrade());
 
-        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 변경하기
+        // 소속 점검순이 주어졌다면, 실제 존재하는 점검순인지 확인 후 review_soon에 반영하기
+        // (빈 객체({})가 주어지면 resolvedReviewSoon.data()가 null이 되어 소속이 해제됨)
         if (user.getAffiliatedReviewSoon() != null) {
             DataWithStatusCode<ReviewSoonInfo> resolvedReviewSoon = resolveAffiliatedReviewSoon(user);
             if (resolvedReviewSoon.code().checkIsError())
                 return resolvedReviewSoon.code();
-            oldUser.setAffiliatedReviewSoon(resolvedReviewSoon.data());
+            saveReviewSoonAssociation(oldUser.getId(), resolvedReviewSoon.data());
         }
 
         userJpaRepository.save(oldUser);

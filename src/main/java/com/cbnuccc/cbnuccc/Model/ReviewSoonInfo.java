@@ -1,12 +1,9 @@
 package com.cbnuccc.cbnuccc.Model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -22,7 +19,6 @@ public class ReviewSoonInfo {
 
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "representative")
-    private MyUser representative;
+    // 대표(순장)는 review_soon.is_representative로 이전됨 (점검순당 대표 2명 이상 허용).
+    // review_soon_info.representative 컬럼은 DB에 남아있지만 더 이상 매핑/사용하지 않음
 }
