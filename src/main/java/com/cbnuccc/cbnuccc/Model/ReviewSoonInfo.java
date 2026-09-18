@@ -18,7 +18,4 @@ public class ReviewSoonInfo {
     private Long id;
 
     private String name;
-
-    // 대표(순장)는 review_soon.is_representative로 이전됨 (점검순당 대표 2명 이상 허용).
-    // review_soon_info.representative 컬럼은 DB에 남아있지만 더 이상 매핑/사용하지 않음
 }
