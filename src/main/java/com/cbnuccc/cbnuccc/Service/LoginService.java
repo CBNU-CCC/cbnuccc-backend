@@ -116,7 +116,7 @@ public class LoginService {
             else
                 loginJpaRepository.save(loginRecord);
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.LOGIN, e);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
 
@@ -136,8 +136,9 @@ public class LoginService {
         try {
             authenticationManagerBuilder.getObject().authenticate(authToken);
         } catch (AuthenticationException e) {
-            // 로그인 실패에 대한 경고 로그 출력하기
-            LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeEmailKV(email), LogUtil.makeExceptionKV(e));
+            // 로그인 실패 - 흔히 발생하는 정상적인 상황(비밀번호 오류 등)이므로 ERROR가 아닌 WARN이되,
+            // 원인 구분(비밀번호 불일치/계정 잠김 등)을 위해 예외 상세는 함께 남김
+            LogUtil.printBasicWarnLog(LogHeader.LOGIN, e, LogUtil.makeEmailKV(email));
             return null;
         }
 
@@ -147,7 +148,7 @@ public class LoginService {
             try {
                 loginJpaRepository.delete(_loginRecord.get());
             } catch (Exception e) {
-                LogUtil.printBasicWarnLog(LogHeader.LOGIN, LogUtil.makeExceptionKV(e));
+                LogUtil.printBasicErrorLog(LogHeader.LOGIN, e);
                 return null;
             }
         }
