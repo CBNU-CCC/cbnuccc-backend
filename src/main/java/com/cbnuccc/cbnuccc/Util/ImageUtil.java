@@ -18,7 +18,7 @@ public class ImageUtil {
         try {
             originalImage = ImageIO.read(file.getInputStream());
         } catch (IOException e) {
-            LogUtil.printBasicWarnLog(LogHeader.COMPRESS_IMAGE, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.COMPRESS_IMAGE, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
 
@@ -31,7 +31,7 @@ public class ImageUtil {
                     .outputQuality(0.7)
                     .toOutputStream(os);
         } catch (IOException e) {
-            LogUtil.printBasicWarnLog(LogHeader.COMPRESS_IMAGE, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.COMPRESS_IMAGE, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
 

@@ -179,7 +179,7 @@ public class StcService {
             Stc createdStc = stcJpaRepository.save(stc);
             return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(createdStc));
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.CREATE_STC, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.CREATE_STC, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
@@ -388,7 +388,7 @@ public class StcService {
             // 로그 출력
             LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC, (Object[]) null);
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.DOWNLOAD_STC, e);
         }
     }
 
