@@ -154,6 +154,11 @@ public class StcService {
             return new DataWithStatusCode<>(StatusCode.NO_USER_FOUND, null);
         MyUser user = _user.get();
 
+        // 사용자와 일자가 같은 행이 존재하면 생성 불가능
+        Optional<Stc> _stc = stcJpaRepository.findByAuthorUuidAndRecordDate(uuid, stcDto.getRecordDate());
+        if (_stc.isPresent())
+            return new DataWithStatusCode<>(StatusCode.DUPLICATED_STC, null);
+
         // STC 인스턴스 생성하기
         Stc stc = new Stc();
         stc.setAuthor(user);
@@ -179,12 +184,12 @@ public class StcService {
             Stc createdStc = stcJpaRepository.save(stc);
             return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(createdStc));
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.CREATE_STC, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.CREATE_STC, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
 
-    // 학년 문자열 변환 (없으면 빈칸, 5학년은 실존하지 않아 기타로 표시)
+    // 학년 문자열 변환
     private String gradeToString(Short grade) {
         if (grade == null)
             return "";
@@ -388,7 +393,7 @@ public class StcService {
             // 로그 출력
             LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC, (Object[]) null);
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.DOWNLOAD_STC, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.DOWNLOAD_STC, e);
         }
     }
 

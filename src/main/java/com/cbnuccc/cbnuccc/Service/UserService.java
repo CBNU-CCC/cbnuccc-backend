@@ -305,7 +305,7 @@ public class UserService {
             LimitedUserDto createdLimitedUserDto = userDtoToLimitedUserDto(userToUserDto(createdUser, null));
             return new DataWithStatusCode<LimitedUserDto>(StatusCode.NO_ERROR, createdLimitedUserDto);
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.CREATE_USER, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.CREATE_USER, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
@@ -460,7 +460,7 @@ public class UserService {
             if (request.getStatus() != 200)
                 return StatusCode.SOMETHING_WENT_WRONG;
         } catch (UnirestException e) {
-            LogUtil.printBasicWarnLog(LogHeader.SEND_REGISTRATION_EMAIL, e.getMessage(), null);
+            LogUtil.printBasicErrorLog(LogHeader.SEND_REGISTRATION_EMAIL, e);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
 
@@ -480,7 +480,7 @@ public class UserService {
             userJpaRepository.delete(user);
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.DELETE_USER, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.DELETE_USER, e);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
     }
@@ -512,7 +512,7 @@ public class UserService {
                     .block();
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.UPLOAD_PROFILE_IMAGE, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.UPLOAD_PROFILE_IMAGE, e);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
     }
@@ -534,7 +534,7 @@ public class UserService {
                     .block();
             return StatusCode.NO_ERROR;
         } catch (Exception e) {
-            LogUtil.printBasicWarnLog(LogHeader.DELETE_PROFILE_IMAGE, LogUtil.makeExceptionKV(e));
+            LogUtil.printBasicErrorLog(LogHeader.DELETE_PROFILE_IMAGE, e);
             return StatusCode.SOMETHING_WENT_WRONG;
         }
     }

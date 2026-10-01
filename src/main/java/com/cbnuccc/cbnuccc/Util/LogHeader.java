@@ -3,7 +3,9 @@ package com.cbnuccc.cbnuccc.Util;
 import lombok.Getter;
 
 public enum LogHeader {
-    ENTER,
+    REQUEST_COMPLETED,
+    UNHANDLED_EXCEPTION,
+    INVALID_TOKEN,
     CREATE_USER,
     GET_USER,
     UPDATE_USER,

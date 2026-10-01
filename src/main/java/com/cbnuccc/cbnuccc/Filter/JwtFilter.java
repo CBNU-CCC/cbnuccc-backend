@@ -50,23 +50,16 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     // 필터링에서 제외할 대상인지 확인하기
+    // 주의: 로그/MDC 관련 부수효과는 여기 두지 않음 - RequestLoggingFilter가 인증 제외 여부와
+    // 무관하게 모든 요청의 MDC 생성/정리 및 완료 로그를 전담함
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
-        String method = request.getMethod();
-        HttpMethod requestMethod = HttpMethod.valueOf(method);
+        HttpMethod requestMethod = HttpMethod.valueOf(request.getMethod());
 
-        // 로그 출력을 위한 설정
-        MDC.put("endpoint", requestUri);
-        MDC.put("method", method);
-        MDC.put("ip", SecurityUtil.getClientIp(request));
-
-        boolean result = SecurityUtil.EXCLUDE_LIST.stream()
+        return SecurityUtil.EXCLUDE_LIST.stream()
                 .anyMatch(exclude -> exclude.method() == requestMethod &&
                         matcher.match(exclude.uriPattern(), requestUri));
-        if (result)
-            LogUtil.printBasicInfoLog(LogHeader.ENTER, (Object[]) null);
-        return result;
     }
 
     // 필터링하기
@@ -77,6 +70,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authString = request.getHeader("Authorization");
         Optional<String> _jwtToken = securityUtil.getAuthorizationToken(authString);
         if (_jwtToken == null) {
+            LogUtil.printBasicWarnLog(LogHeader.INVALID_TOKEN);
             response.sendError(
                     StatusCode.INVALID_TOKEN.getResponseStatus().value(),
                     StatusCode.INVALID_TOKEN.getErrorMessage());
@@ -89,6 +83,9 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             claim = securityUtil.extractToken(jwtToken);
         } catch (Exception e) {
+            // 위조/만료 등으로 유효하지 않은 토큰 - 버그는 아니므로 WARN이되, 원인 파악을 위해
+            // 예외 상세(만료/서명불일치/형식오류 등)는 그대로 남김
+            LogUtil.printBasicWarnLog(LogHeader.INVALID_TOKEN, e);
             response.sendError(
                     StatusCode.INVALID_TOKEN.getResponseStatus().value(),
                     StatusCode.INVALID_TOKEN.getErrorMessage());
@@ -107,19 +104,14 @@ public class JwtFilter extends OncePerRequestFilter {
             MDC.put("entered_user_email", String.valueOf(enteredUser.getEmail().toLowerCase().hashCode()));
         }
 
-        // 진입 로그 출력하기
-        LogUtil.printBasicInfoLog(LogHeader.ENTER, (Object[]) null);
-
         // 로그인을 위한 최종 설정
         List<SimpleGrantedAuthority> roles = List.of(new SimpleGrantedAuthority("ROLE_" + claim.get("rank")));
         var authToken = new UsernamePasswordAuthenticationToken(claim.get("uuid").toString(), null, roles);
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        try {
-            filterChain.doFilter(request, response);
-        } finally {
-            MDC.clear();
-        }
+        // MDC 정리는 RequestLoggingFilter(가장 바깥쪽 필터)만 수행함 - 여기서 clear()를 호출하면
+        // RequestLoggingFilter가 심어둔 request_id 등이 완료 로그가 찍히기 전에 지워져 버림
+        filterChain.doFilter(request, response);
     }
 }
