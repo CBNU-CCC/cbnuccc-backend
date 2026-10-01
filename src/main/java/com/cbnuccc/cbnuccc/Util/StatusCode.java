@@ -38,7 +38,8 @@ public enum StatusCode {
     PASSWORD_FEATURE_TEMPORARILY_DISABLED(HttpStatus.FORBIDDEN, "비밀번호 관련 기능은 보안 강화를 위해 일시적으로 제한되었습니다.", 22),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "주어진 refresh token이 유효하지 않습니다.", 23),
     INVALID_SOON_REPRESENTATIVE(HttpStatus.UNAUTHORIZED, "주어진 사용자가 소속된 점검순의 점검 순장/대표가 본인이 아닙니다.", 24),
-    NO_REVIEW_SOON_FOUND(HttpStatus.NOT_FOUND, "주어진 사용자가 소속된 점검순이 존재하지 않습니다.", 25);
+    NO_REVIEW_SOON_FOUND(HttpStatus.NOT_FOUND, "주어진 사용자가 소속된 점검순이 존재하지 않습니다.", 25),
+    DUPLICATED_STC(HttpStatus.CONFLICT, "사용자가 입력한 STC가 중복됩니다. (기존에 입력한 STC의 일자와 중복됨)", 26);
 
     @Getter
     private final HttpStatusCode responseStatus;
