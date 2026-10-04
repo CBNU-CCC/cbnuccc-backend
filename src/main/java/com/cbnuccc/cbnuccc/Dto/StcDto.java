@@ -23,6 +23,9 @@ public class StcDto {
     @Schema(description = "기록일", example = "2000-01-01")
     private LocalDate recordDate;
 
+    @Schema(description = "기수", example = "1")
+    private Short term;
+
     // 인덱스 + 1이 항목 번호(topic_number)에 대응하는 이수 여부 목록
     @Schema(description = "항목별 이수 여부 목록 (인덱스 + 1이 항목 번호에 대응)")
     private List<Short> topics;

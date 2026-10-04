@@ -68,6 +68,7 @@ public class StcService {
                 stc.getId(),
                 authorUuid,
                 stc.getRecordDate(),
+                stc.getTerm(),
                 topics,
                 stc.getComment(),
                 stc.getWeeklyLife(),
@@ -163,6 +164,7 @@ public class StcService {
         Stc stc = new Stc();
         stc.setAuthor(user);
         stc.setRecordDate(stcDto.getRecordDate());
+        stc.setTerm(stcDto.getTerm());
         stc.setComment(stcDto.getComment());
         stc.setWeeklyLife(stcDto.getWeeklyLife());
         stc.setPrayerRequest(stcDto.getPrayerRequest());
