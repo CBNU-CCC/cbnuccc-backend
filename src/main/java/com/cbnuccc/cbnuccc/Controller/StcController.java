@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,7 +49,7 @@ public class StcController {
 
     @Operation(summary = "내 STC(전체) 조회", description = "내가 작성한 모든 STC 정보를 가져온다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "내 STC 목록 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 목록 응답 예시", value = "{\"data\":[{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"},{\"id\":19,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-07\",\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}],\"length\":2,\"pageAt\":0,\"totalPage\":1,\"totalElement\":2}"))),
+            @ApiResponse(responseCode = "200", description = "내 STC 목록 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 목록 응답 예시", value = "{\"data\":[{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"term\":1,\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"},{\"id\":19,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-07\",\"term\":1,\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}],\"length\":2,\"pageAt\":0,\"totalPage\":1,\"totalElement\":2}"))),
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 미제공 또는 만료)", content = @Content)
     })
     @GetMapping("/stc")
@@ -67,7 +68,7 @@ public class StcController {
 
     @Operation(summary = "내 STC(단일) 조회", description = "ID에 해당하는 내 STC 정보 하나만 가져온다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "내 STC 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 단일 응답 예시", value = "{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"}"))),
+            @ApiResponse(responseCode = "200", description = "내 STC 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 단일 응답 예시", value = "{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"term\":1,\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"}"))),
             @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 ID의 STC를 찾을 수 없거나 접근 권한 없음", content = @Content(examples = @ExampleObject(name = "STC 없음 응답 예시", value = "{\"errorCode\":21,\"message\":\"주어진 STC 정보가 존재하지 않습니다.\"}")))
     })
@@ -89,7 +90,7 @@ public class StcController {
 
     @Operation(summary = "내 STC(일자별) 조회", description = "주어진 기록일(recordDate)에 해당하는 내 STC 정보 하나만 가져온다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "내 STC 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 단일 응답 예시", value = "{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"}"))),
+            @ApiResponse(responseCode = "200", description = "내 STC 조회 성공", content = @Content(examples = @ExampleObject(name = "내 STC 단일 응답 예시", value = "{\"id\":18,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-06\",\"term\":1,\"topics\":[0,1,1,0,1],\"comment\":null,\"weeklyLife\":\"기쁜 하루다ㅠㅠ\",\"prayerRequest\":\"기쁜 하루가 되길\",\"review\":\"test review message123\"}"))),
             @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 미제공 또는 만료)", content = @Content),
             @ApiResponse(responseCode = "404", description = "해당 기록일의 STC를 찾을 수 없음", content = @Content(examples = @ExampleObject(name = "STC 없음 응답 예시", value = "{\"errorCode\":21,\"message\":\"주어진 STC 정보가 존재하지 않습니다.\"}")))
     })
@@ -111,7 +112,7 @@ public class StcController {
 
     @Operation(summary = "STC 생성", description = "새로운 STC(점검표) 정보를 작성한다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "STC 생성 성공", content = @Content(examples = @ExampleObject(name = "STC 생성 응답 예시", value = "{\"id\":19,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-07\",\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}"))),
+            @ApiResponse(responseCode = "201", description = "STC 생성 성공", content = @Content(examples = @ExampleObject(name = "STC 생성 응답 예시", value = "{\"id\":19,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-07\",\"term\":1,\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}"))),
             @ApiResponse(responseCode = "400", description = "입력값 검증 실패", content = @Content),
             @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
             @ApiResponse(responseCode = "409", description = "중복된 STC 존재", content = @Content)
@@ -119,7 +120,7 @@ public class StcController {
     @PostMapping("/stc")
     public ResponseEntity<?> createStc(
             @Parameter(hidden = true) Authentication authentication,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "생성할 STC 정보", required = true, content = @Content(examples = @ExampleObject(name = "STC 생성 요청 예시", value = "{\"id\":null,\"authorUuid\":null,\"recordDate\":\"2026-09-07\",\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}"))) @RequestBody StcDto stcDto) {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "생성할 STC 정보", required = true, content = @Content(examples = @ExampleObject(name = "STC 생성 요청 예시", value = "{\"id\":null,\"authorUuid\":null,\"recordDate\":\"2026-09-07\",\"term\":1,\"topics\":[1,1,0,1,1],\"comment\":null,\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}"))) @RequestBody StcDto stcDto) {
         UUID uuid = userService.getUuidFromAuth(authentication);
         DataWithStatusCode<StcDto> result = stcService.createStc(stcDto, uuid);
         StatusCode code = result.code();
@@ -130,6 +131,30 @@ public class StcController {
 
         LogUtil.printBasicInfoLog(LogHeader.CREATE_STC, LogUtil.makeIdKV(result.data().getId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.data());
+    }
+
+    @Operation(summary = "STC 수정", description = "내 STC(점검표) 정보를 수정한다. id, authorUuid, recordDate, term은 수정할 수 없으며, 필드를 보내지 않으면(null) 해당 항목은 변경되지 않는다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "STC 수정 성공", content = @Content(examples = @ExampleObject(name = "STC 수정 응답 예시", value = "{\"id\":19,\"authorUuid\":\"27ad10b7-3a0f-432a-98e7-6c0290992a4c\",\"recordDate\":\"2026-09-07\",\"term\":1,\"topics\":[1,1,0,1,1],\"comment\":\"수정된 소감입니다.\",\"weeklyLife\":\"테스트용 일주일의 삶입니다.\",\"prayerRequest\":\"테스트용 기도제목입니다.\",\"review\":null}"))),
+            @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+            @ApiResponse(responseCode = "403", description = "id, recordDate, term 등 수정 불가능한 정보를 수정하려고 함", content = @Content(examples = @ExampleObject(name = "수정 불가능 정보 수정 시도 응답 예시", value = "{\"errorCode\":3,\"message\":\"사용자의 중요 정보는 수정할 수 없습니다.\"}"))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 STC를 찾을 수 없거나 접근 권한 없음", content = @Content(examples = @ExampleObject(name = "STC 없음 응답 예시", value = "{\"errorCode\":21,\"message\":\"주어진 STC 정보가 존재하지 않습니다.\"}")))
+    })
+    @PatchMapping("/stc/{id}")
+    public ResponseEntity<?> updateStc(
+            @Parameter(hidden = true) Authentication authentication,
+            @Parameter(description = "수정할 STC ID", example = "1") @PathVariable("id") long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "수정할 STC 정보. 변경하지 않을 필드는 생략(null)한다.", required = true, content = @Content(examples = @ExampleObject(name = "STC 수정 요청 예시", value = "{\"comment\":\"수정된 소감입니다.\"}"))) @RequestBody StcDto stcDto) {
+        UUID uuid = userService.getUuidFromAuth(authentication);
+        DataWithStatusCode<StcDto> result = stcService.updateStcById(id, uuid, stcDto);
+        StatusCode code = result.code();
+        if (code.checkIsError()) {
+            LogUtil.printBasicWarnLog(LogHeader.UPDATE_STC, LogUtil.makeStatusCodeMessageKV(code));
+            return code.makeErrorResponseEntity();
+        }
+
+        LogUtil.printBasicInfoLog(LogHeader.UPDATE_STC, LogUtil.makeIdKV(id));
+        return ResponseEntity.ok(result.data());
     }
 
     @Operation(summary = "점검 한 마디 작성", description = "본인이 점검 순장/대표로 있는 점검순 소속 사용자의 STC에 점검 한 마디를 작성한다.")
@@ -174,9 +199,10 @@ public class StcController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "엑셀 다운로드 성공", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     })
-    @GetMapping("/stc/excel")
-    public void downloadExcel(@Parameter(hidden = true) HttpServletResponse response) {
-        stcService.downloadStc(response);
+    @GetMapping(value = { "/stc/excel/{term}", "/stc/excel" })
+    public void downloadExcel(@Parameter(hidden = true) HttpServletResponse response,
+            @Parameter(description = "조회할 STC의 기수 (기본값: 1)", example = "1", required = false) @PathVariable(name = "term", required = false) Short term) {
+        stcService.downloadStc(response, term == null ? 1 : term); // term의 가본값을 1로 설정
         LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC);
     }
 

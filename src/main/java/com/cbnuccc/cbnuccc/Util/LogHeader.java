@@ -36,6 +36,7 @@ public enum LogHeader {
     RESET_PASSWORD,
     CREATE_STC,
     GET_STC,
+    UPDATE_STC,
     DOWNLOAD_STC,
     CREATE_REVIEW_STC,
     REFRESH_TOKEN,

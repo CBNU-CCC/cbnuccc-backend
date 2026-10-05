@@ -23,10 +23,11 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
         @Query("""
                                 select s.recordDate
                                 from Stc s
+                                where s.term = :term
                                 group by s.recordDate
                                 order by s.recordDate asc
                         """)
-        List<LocalDate> findAllDates();
+        List<LocalDate> findAllDatesWithTerm(Short term);
 
         // 주어진 uuid와 일자로 가져오기
         Optional<Stc> findByAuthorUuidAndRecordDate(@Param("uuid") UUID uuid,
@@ -48,13 +49,14 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
                                 select distinct u.uuid
                                 from Stc s
                                 join s.author u
-                                where u.id in (
-                                        select rs.id
-                                        from ReviewSoon rs
-                                        where rs.affiliatedReviewSoon.id = :reviewSoonId
-                                )
+                                where s.term = :term
+                                        and u.id in (
+                                                select rs.id
+                                                from ReviewSoon rs
+                                                where rs.affiliatedReviewSoon.id = :reviewSoonId
+                                        )
                         """)
-        Page<UUID> findAuthorUuidByAffiliatedReviewSoonId(Pageable pageable, Long reviewSoonId);
+        Page<UUID> findAuthorUuidByAffiliatedReviewSoonIdWithTerm(Pageable pageable, Long reviewSoonId, Short term);
 
         // 소속 점검순이 없는(review_soon 행이 없거나, 있어도 affiliated_review_soon이 NULL인) 사용자 중
         // STC 기록이 있는 uuid 목록 (기타 시트용)
@@ -62,11 +64,12 @@ public interface StcJpaRepository extends JpaRepository<Stc, Long> {
                                 select distinct u.uuid
                                 from Stc s
                                 join s.author u
-                                where u.id not in (
-                                        select rs.id
-                                        from ReviewSoon rs
-                                        where rs.affiliatedReviewSoon is not null
-                                )
+                                where s.term = :term
+                                        and u.id not in (
+                                                select rs.id
+                                                from ReviewSoon rs
+                                                where rs.affiliatedReviewSoon is not null
+                                        )
                         """)
-        Page<UUID> findAuthorUuidByAffiliatedReviewSoonIsNull(Pageable pageable);
+        Page<UUID> findAuthorUuidByAffiliatedReviewSoonIsNullWithTerm(Pageable pageable, Short term);
 }

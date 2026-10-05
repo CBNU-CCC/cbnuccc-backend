@@ -37,6 +37,9 @@ public class Stc {
 
     private LocalDate recordDate;
 
+    // 기수
+    private Short term;
+
     @Nullable
     private String comment;
 
