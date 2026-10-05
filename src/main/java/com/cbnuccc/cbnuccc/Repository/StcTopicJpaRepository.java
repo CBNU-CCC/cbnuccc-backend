@@ -11,10 +11,10 @@ import com.cbnuccc.cbnuccc.Model.StcTopicId;
 
 public interface StcTopicJpaRepository extends JpaRepository<StcTopic, StcTopicId> {
         // uuid와 항목 번호로 completion 값의 합 가져오기
-        @Query("select coalesce(sum(t.completion), 0) from StcTopic t where t.stc.author.uuid = :uuid and t.topicNumber = :topicNumber")
-        int sumCompletionByStcAuthorUuidAndTopicNumber(UUID uuid, Short topicNumber);
+        @Query("select coalesce(sum(t.completion), 0) from StcTopic t where t.stc.author.uuid = :uuid and t.topicNumber = :topicNumber and t.stc.term = :term")
+        int sumCompletionByStcAuthorUuidAndTopicNumberWithTerm(UUID uuid, Short topicNumber, Short term);
 
         // 현재 존재하는 항목 번호 중 최댓값 가져오기
-        @Query("select max(t.topicNumber) from StcTopic t")
-        Optional<Short> findMaxTopicNumber();
+        @Query("select max(t.topicNumber) from StcTopic t where t.stc.term = :term")
+        Optional<Short> findMaxTopicNumber(Short term);
 }

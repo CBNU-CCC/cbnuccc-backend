@@ -68,6 +68,7 @@ public class StcService {
                 stc.getId(),
                 authorUuid,
                 stc.getRecordDate(),
+                stc.getTerm(),
                 topics,
                 stc.getComment(),
                 stc.getWeeklyLife(),
@@ -163,6 +164,7 @@ public class StcService {
         Stc stc = new Stc();
         stc.setAuthor(user);
         stc.setRecordDate(stcDto.getRecordDate());
+        stc.setTerm(stcDto.getTerm());
         stc.setComment(stcDto.getComment());
         stc.setWeeklyLife(stcDto.getWeeklyLife());
         stc.setPrayerRequest(stcDto.getPrayerRequest());
@@ -185,6 +187,51 @@ public class StcService {
             return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(createdStc));
         } catch (Exception e) {
             LogUtil.printBasicErrorLog(LogHeader.CREATE_STC, e);
+            return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
+        }
+    }
+
+    // STC 정보 수정하기 (id, author, recordDate, term은 수정 불가능)
+    @Transactional
+    public DataWithStatusCode<StcDto> updateStcById(long id, UUID uuid, StcDto stcDto) {
+        // 본인 소유의 STC인지 확인하며 조회
+        Optional<Stc> _stc = stcJpaRepository.findByIdAndAuthorUuid(id, uuid);
+        if (_stc.isEmpty())
+            return new DataWithStatusCode<>(StatusCode.NO_STC_FOUND, null);
+        Stc stc = _stc.get();
+
+        // 수정 불가능한 필드(id, recordDate, term)를 바꾸려는 시도 차단
+        if (stcDto.getId() != null || stcDto.getRecordDate() != null || stcDto.getTerm() != null)
+            return new DataWithStatusCode<>(StatusCode.CONNOT_CHANGE_IMPORTANT_INFORMATION, null);
+
+        // 필드 값이 null이 아니라면 변경하기
+        if (stcDto.getComment() != null)
+            stc.setComment(stcDto.getComment());
+        if (stcDto.getWeeklyLife() != null)
+            stc.setWeeklyLife(stcDto.getWeeklyLife());
+        if (stcDto.getPrayerRequest() != null)
+            stc.setPrayerRequest(stcDto.getPrayerRequest());
+        if (stcDto.getReview() != null)
+            stc.setReview(stcDto.getReview());
+
+        // 항목별 이수 여부가 주어졌다면, 기존 목록을 전부 교체하기
+        if (stcDto.getTopics() != null) {
+            List<Short> completions = stcDto.getTopics();
+            stc.getTopics().clear();
+            for (int i = 0; i < completions.size(); i++) {
+                StcTopic topic = new StcTopic();
+                topic.setStc(stc);
+                topic.setTopicNumber((short) (i + 1));
+                topic.setCompletion(completions.get(i));
+                stc.getTopics().add(topic);
+            }
+        }
+
+        try {
+            Stc updatedStc = stcJpaRepository.save(stc);
+            return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(updatedStc));
+        } catch (Exception e) {
+            LogUtil.printBasicErrorLog(LogHeader.UPDATE_STC, e);
             return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
         }
     }
@@ -219,7 +266,7 @@ public class StcService {
 
     // 주어진 참여자 목록으로 하나의 시트를 채우기
     private void fillSheet(Workbook workbook, Sheet sheet, Page<UUID> authors, List<LocalDate> dates,
-            int topicCount) {
+            int topicCount, short term) {
         int gradeColumnIndex = 1;
         int recordDateColumnIndex = 3;
         int weeklyLifeColumnIndex = 4 + topicCount;
@@ -286,8 +333,8 @@ public class StcService {
                 userHeaderRow.createCell(3 + topicNumber)
                         .setCellValue(
                                 stcTopicJpaRepository
-                                        .sumCompletionByStcAuthorUuidAndTopicNumber(
-                                                authorUuid, topicNumber));
+                                        .sumCompletionByStcAuthorUuidAndTopicNumberWithTerm(
+                                                authorUuid, topicNumber, term));
             }
 
             // stc 활동에 따른 추가 행 삽입
@@ -356,15 +403,15 @@ public class StcService {
 
     // STC 정보 액셀 다운로드
     @Transactional
-    public void downloadStc(HttpServletResponse response) {
+    public void downloadStc(HttpServletResponse response, short term) {
         try {
             // 엑셀 워크북 생성 (.xlsx)
             Workbook workbook = new XSSFWorkbook();
 
             // 현재 존재하는 항목 개수 (항목 열은 이 개수만큼 동적으로 생성됨)
-            int topicCount = stcTopicJpaRepository.findMaxTopicNumber().orElse((short) 0);
+            int topicCount = stcTopicJpaRepository.findMaxTopicNumber(term).orElse((short) 0);
 
-            List<LocalDate> dates = stcJpaRepository.findAllDates();
+            List<LocalDate> dates = stcJpaRepository.findAllDatesWithTerm(term);
             Set<String> usedSheetNames = new HashSet<>();
 
             // 점검순별 시트 생성 (점검순 목록은 review_soon_info 테이블에서 동적으로 조회)
@@ -372,19 +419,21 @@ public class StcService {
                     .findAll(Sort.by(Sort.Direction.ASC, "id"));
             for (ReviewSoonInfo reviewSoonInfo : reviewSoonInfoList) {
                 Sheet sheet = workbook.createSheet(sanitizeSheetName(reviewSoonInfo.getName(), usedSheetNames));
-                Page<UUID> authors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonId(
-                        Pageable.unpaged(), reviewSoonInfo.getId());
-                fillSheet(workbook, sheet, authors, dates, topicCount);
+                Page<UUID> authors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIdWithTerm(
+                        Pageable.unpaged(), reviewSoonInfo.getId(), term);
+                fillSheet(workbook, sheet, authors, dates, topicCount, term);
             }
 
             // 소속된 점검순이 없는 사용자를 모은 기타 시트 생성
             Sheet etcSheet = workbook.createSheet(sanitizeSheetName("기타", usedSheetNames));
-            Page<UUID> etcAuthors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIsNull(Pageable.unpaged());
-            fillSheet(workbook, etcSheet, etcAuthors, dates, topicCount);
+            Page<UUID> etcAuthors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIsNullWithTerm(
+                    Pageable.unpaged(), term);
+            fillSheet(workbook, etcSheet, etcAuthors, dates, topicCount, term);
 
             // HTTP 응답 설정
+            String filename = String.format("STC_excel_%d_term", term);
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.setHeader("Content-Disposition", "attachment; filename=STC_excel.xlsx");
+            response.setHeader("Content-Disposition", "attachment; filename=" + filename + ".xlsx");
 
             // 스트림으로 엑셀 파일 출력
             workbook.write(response.getOutputStream());
