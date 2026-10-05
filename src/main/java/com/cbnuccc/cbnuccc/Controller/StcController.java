@@ -174,9 +174,10 @@ public class StcController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "엑셀 다운로드 성공", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     })
-    @GetMapping("/stc/excel")
-    public void downloadExcel(@Parameter(hidden = true) HttpServletResponse response) {
-        stcService.downloadStc(response);
+    @GetMapping(value = { "/stc/excel/{term}", "/stc/excel" })
+    public void downloadExcel(@Parameter(hidden = true) HttpServletResponse response,
+            @Parameter(description = "조회할 STC의 기수 (기본값: 1)", example = "1", required = false) @PathVariable(name = "term", required = false) Short term) {
+        stcService.downloadStc(response, term == null ? 1 : term); // term의 가본값을 1로 설정
         LogUtil.printBasicInfoLog(LogHeader.DOWNLOAD_STC);
     }
 

@@ -221,7 +221,7 @@ public class StcService {
 
     // 주어진 참여자 목록으로 하나의 시트를 채우기
     private void fillSheet(Workbook workbook, Sheet sheet, Page<UUID> authors, List<LocalDate> dates,
-            int topicCount) {
+            int topicCount, short term) {
         int gradeColumnIndex = 1;
         int recordDateColumnIndex = 3;
         int weeklyLifeColumnIndex = 4 + topicCount;
@@ -288,8 +288,8 @@ public class StcService {
                 userHeaderRow.createCell(3 + topicNumber)
                         .setCellValue(
                                 stcTopicJpaRepository
-                                        .sumCompletionByStcAuthorUuidAndTopicNumber(
-                                                authorUuid, topicNumber));
+                                        .sumCompletionByStcAuthorUuidAndTopicNumberWithTerm(
+                                                authorUuid, topicNumber, term));
             }
 
             // stc 활동에 따른 추가 행 삽입
@@ -358,15 +358,15 @@ public class StcService {
 
     // STC 정보 액셀 다운로드
     @Transactional
-    public void downloadStc(HttpServletResponse response) {
+    public void downloadStc(HttpServletResponse response, short term) {
         try {
             // 엑셀 워크북 생성 (.xlsx)
             Workbook workbook = new XSSFWorkbook();
 
             // 현재 존재하는 항목 개수 (항목 열은 이 개수만큼 동적으로 생성됨)
-            int topicCount = stcTopicJpaRepository.findMaxTopicNumber().orElse((short) 0);
+            int topicCount = stcTopicJpaRepository.findMaxTopicNumber(term).orElse((short) 0);
 
-            List<LocalDate> dates = stcJpaRepository.findAllDates();
+            List<LocalDate> dates = stcJpaRepository.findAllDatesWithTerm(term);
             Set<String> usedSheetNames = new HashSet<>();
 
             // 점검순별 시트 생성 (점검순 목록은 review_soon_info 테이블에서 동적으로 조회)
@@ -374,19 +374,21 @@ public class StcService {
                     .findAll(Sort.by(Sort.Direction.ASC, "id"));
             for (ReviewSoonInfo reviewSoonInfo : reviewSoonInfoList) {
                 Sheet sheet = workbook.createSheet(sanitizeSheetName(reviewSoonInfo.getName(), usedSheetNames));
-                Page<UUID> authors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonId(
-                        Pageable.unpaged(), reviewSoonInfo.getId());
-                fillSheet(workbook, sheet, authors, dates, topicCount);
+                Page<UUID> authors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIdWithTerm(
+                        Pageable.unpaged(), reviewSoonInfo.getId(), term);
+                fillSheet(workbook, sheet, authors, dates, topicCount, term);
             }
 
             // 소속된 점검순이 없는 사용자를 모은 기타 시트 생성
             Sheet etcSheet = workbook.createSheet(sanitizeSheetName("기타", usedSheetNames));
-            Page<UUID> etcAuthors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIsNull(Pageable.unpaged());
-            fillSheet(workbook, etcSheet, etcAuthors, dates, topicCount);
+            Page<UUID> etcAuthors = stcJpaRepository.findAuthorUuidByAffiliatedReviewSoonIsNullWithTerm(
+                    Pageable.unpaged(), term);
+            fillSheet(workbook, etcSheet, etcAuthors, dates, topicCount, term);
 
             // HTTP 응답 설정
+            String filename = String.format("STC_excel_%d_term", term);
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.setHeader("Content-Disposition", "attachment; filename=STC_excel.xlsx");
+            response.setHeader("Content-Disposition", "attachment; filename=" + filename + ".xlsx");
 
             // 스트림으로 엑셀 파일 출력
             workbook.write(response.getOutputStream());
