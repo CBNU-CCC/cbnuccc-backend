@@ -14,7 +14,7 @@ public enum StatusCode {
     SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생했습니다.", 0),
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "주어진 이메일이 중복됩니다.", 1),
     NO_USER_FOUND(HttpStatus.NOT_FOUND, "구하고자 하는 사용자가 존재하지 않습니다.", 2),
-    CONNOT_CHANGE_IMPORTANT_INFORMATION(HttpStatus.FORBIDDEN, "사용자의 중요 정보는 수정할 수 없습니다.", 3),
+    CONNOT_CHANGE_IMPORTANT_INFORMATION(HttpStatus.FORBIDDEN, "중요 정보는 수정할 수 없습니다.", 3),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "주어진 JWT 토큰이 유효하지 않습니다.", 4),
     NO_EMAIL_FOUND(HttpStatus.NOT_FOUND, "구하고자 하는 이메일이 존재하지 않습니다.", 5),
     WRONG_CODE(HttpStatus.BAD_REQUEST, "주어진 코드가 잘못되었습니다.", 6),

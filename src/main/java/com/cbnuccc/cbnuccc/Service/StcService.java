@@ -191,6 +191,51 @@ public class StcService {
         }
     }
 
+    // STC 정보 수정하기 (id, author, recordDate, term은 수정 불가능)
+    @Transactional
+    public DataWithStatusCode<StcDto> updateStcById(long id, UUID uuid, StcDto stcDto) {
+        // 본인 소유의 STC인지 확인하며 조회
+        Optional<Stc> _stc = stcJpaRepository.findByIdAndAuthorUuid(id, uuid);
+        if (_stc.isEmpty())
+            return new DataWithStatusCode<>(StatusCode.NO_STC_FOUND, null);
+        Stc stc = _stc.get();
+
+        // 수정 불가능한 필드(id, recordDate, term)를 바꾸려는 시도 차단
+        if (stcDto.getId() != null || stcDto.getRecordDate() != null || stcDto.getTerm() != null)
+            return new DataWithStatusCode<>(StatusCode.CONNOT_CHANGE_IMPORTANT_INFORMATION, null);
+
+        // 필드 값이 null이 아니라면 변경하기
+        if (stcDto.getComment() != null)
+            stc.setComment(stcDto.getComment());
+        if (stcDto.getWeeklyLife() != null)
+            stc.setWeeklyLife(stcDto.getWeeklyLife());
+        if (stcDto.getPrayerRequest() != null)
+            stc.setPrayerRequest(stcDto.getPrayerRequest());
+        if (stcDto.getReview() != null)
+            stc.setReview(stcDto.getReview());
+
+        // 항목별 이수 여부가 주어졌다면, 기존 목록을 전부 교체하기
+        if (stcDto.getTopics() != null) {
+            List<Short> completions = stcDto.getTopics();
+            stc.getTopics().clear();
+            for (int i = 0; i < completions.size(); i++) {
+                StcTopic topic = new StcTopic();
+                topic.setStc(stc);
+                topic.setTopicNumber((short) (i + 1));
+                topic.setCompletion(completions.get(i));
+                stc.getTopics().add(topic);
+            }
+        }
+
+        try {
+            Stc updatedStc = stcJpaRepository.save(stc);
+            return new DataWithStatusCode<>(StatusCode.NO_ERROR, stcToStcDto(updatedStc));
+        } catch (Exception e) {
+            LogUtil.printBasicErrorLog(LogHeader.UPDATE_STC, e);
+            return new DataWithStatusCode<>(StatusCode.SOMETHING_WENT_WRONG, null);
+        }
+    }
+
     // 학년 문자열 변환
     private String gradeToString(Short grade) {
         if (grade == null)
