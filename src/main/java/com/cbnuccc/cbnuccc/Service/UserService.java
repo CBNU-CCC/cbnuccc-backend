@@ -291,6 +291,7 @@ public class UserService {
         user = encodeUserPassword(user, user.getPassword());
         user = encodeUserStudentId(user, user.getStudentId());
 
+        user.setEmail(email);
         user.setPasswordChangedAt(OffsetDateTimeUtil.getNow());
 
         try {
